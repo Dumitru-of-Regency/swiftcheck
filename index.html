@@ -251,26 +251,26 @@ return;
 }
 tagId = tagId.trim();
 
-// Look up worker by NFC tag or QR code
-let worker = null;
+// Look up operative by NFC tag or QR code
+let operative = null;
 let workerId = null;
 
 for (const [id, data] of Object.entries(workersCache)) {
 if (data.nfcTag === tagId || data.qrCode === tagId || id === tagId) {
-worker = data;
+operative = data;
 workerId = id;
 break;
 }
 }
 
-if (!worker) {
+if (!operative) {
 setStatus('❌ Unknown tag: ' + tagId, 'error');
-log('Tag not found in worker database: ' + tagId, 'err');
+log('Tag not found in operative database: ' + tagId, 'err');
 lookupEl.style.display = 'none';
 return;
 }
 
-// Show worker info
+// Show operative info
 lookupName.textContent = worker.name || workerId;
 lookupRole.textContent = worker.role || '';
 lookupEl.style.display = 'block';
