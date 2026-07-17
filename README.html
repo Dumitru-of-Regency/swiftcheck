@@ -1,0 +1,86 @@
+# SwiftCheck — Complete Setup Guide
+
+## What You Get
+
+1. **Worker Terminal** (`index.html`) — Tap NFC/QR to sign in or out
+2. **Office Dashboard** (`office.html`) — See who's on site in real-time
+3. **Admin Page** (`admin.html`) — Add/edit/delete workers
+
+## Setup (15 minutes)
+
+### Step 1: Create Firebase Project
+1. Go to https://console.firebase.google.com
+2. Click "Add project" → name it `swiftcheck`
+3. Disable Google Analytics → Create project
+
+### Step 2: Create Realtime Database
+1. Left menu → Build → Realtime Database
+2. Click "Create Database"
+3. Select "Start in test mode" → Choose location → Enable
+
+### Step 3: Get Your Config
+1. Click ⚙️ gear → Project settings
+2. Scroll to "Your apps" → Click web icon `</>`
+3. App nickname: `swiftcheck-web` → Register app
+4. Copy the `firebaseConfig` block
+
+### Step 4: Paste Config Into ALL 3 Files
+Open `index.html`, `office.html`, and `admin.html`. Find this block:
+
+const firebaseConfig = {
+apiKey: "PASTE_YOUR_API_KEY",
+...
+};
+
+Replace with your Firebase config in ALL THREE files.
+
+### Step 5: Upload to GitHub
+1. Create new repo: `swiftcheck` (public)
+2. Upload all 3 HTML files + this README
+3. Settings → Pages → Source: Deploy from branch → main / (root) → Save
+
+### Step 6: Get Your Links
+After 1-2 minutes, your URLs will be:
+- **Worker Terminal:** `https://YOUR-USERNAME.github.io/swiftcheck/`
+- **Office Dashboard:** `https://YOUR-USERNAME.github.io/swiftcheck/office.html`
+- **Admin Page:** `https://YOUR-USERNAME.github.io/swiftcheck/admin.html`
+
+## How to Use
+
+### 1. Add Workers (Admin Page)
+1. Open the admin page
+2. Click "Read NFC Tag" and tap a worker's card
+3. Fill in name, role, etc.
+4. Click "Save Worker"
+5. Repeat for all workers
+
+### 2. Daily Sign-In/Out (Worker Terminal)
+1. Open the worker terminal on an Android phone
+2. Tap "START NFC SCAN"
+3. Workers tap their NFC card to sign IN
+4. Workers tap again to sign OUT
+5. Office sees everything live
+
+### 3. Monitor (Office Dashboard)
+1. Open the office dashboard
+2. See who's currently on site
+3. View full activity log
+4. Export to CSV if needed
+
+## Customization
+
+Edit the `CONFIG` section at the top of `index.html` to change wording:
+
+const CONFIG = {
+siteTitle: "Site Terminal",
+actionIn: "IN SITE OFFICE",
+actionOut: "LEFT SITE",
+...
+};
+
+## Notes
+
+- NFC only works on Android Chrome
+- iPhones can use QR codes or manual entry
+- Firebase free tier: 1GB storage, 10GB/month transfer
+- Keep Firebase in "test mode" for internal use only

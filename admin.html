@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftCheck · Admin</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:0; background:#020617; color:#f1f5f9;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+.container { max-width:900px; margin:0 auto; padding:24px 20px 60px; }
+header { padding:0 0 20px; border-bottom:1px solid #1e293b; margin-bottom:24px; }
+header h1 { margin:0; font-size:22px; letter-spacing:1px; }
+header h1 span { color:#f59e0b; }
+.card { background:#1e293b; padding:20px; border-radius:14px; margin-bottom:20px; border:1px solid #293548; }
+.card h2 { margin:0 0 16px; font-size:16px; color:#f1f5f9; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.form-group { display:flex; flex-direction:column; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:600; }
+input, select { padding:12px 14px; border-radius:8px; border:1px solid #334155;
+background:#0f172a; color:#fff; font-size:14px; outline:none; font-family:inherit; }
+input:focus, select:focus { border-color:#4f46e5; }
+button { padding:12px 24px; border-radius:8px; border:none; font-weight:600;
+cursor:pointer; color:#fff; font-size:14px; font-family:inherit; }
+.btn-primary { background:#4f46e5; }
+.btn-primary:hover { background:#4338ca; }
+.btn-secondary { background:#64748b; }
+.btn-danger { background:#dc2626; }
+.btn-small { padding:8px 14px; font-size:12px; }
+.btn-group { display:flex; gap:10px; }
+.worker-list { margin-top:20px; }
+.worker-item { background:#0f172a; padding:16px; border-radius:10px; margin-bottom:10px;
+display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.worker-info { flex:1; min-width:200px; }
+.worker-name { font-size:16px; font-weight:700; color:#f1f5f9; }
+.worker-details { font-size:12px; color:#94a3b8; margin-top:4px; }
+.worker-actions { display:flex; gap:8px; }
+.empty { padding:40px; text-align:center; color:#64748b; }
+.status-msg { padding:12px; border-radius:8px; margin-bottom:16px; text-align:center; font-weight:600; }
+.status-success { background:#064e3b; color:#6ee7b7; }
+.status-error { background:#7f1d1d; color:#fca5a5; }
+@media (max-width:600px) {
+.form-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>⚡ SWIFTCHECK <span>· Admin</span></h1>
+</header>
+
+<div id="status-msg"></div>
+
+<div class="card">
+<h2 id="form-title">Add New Worker</h2>
+<form id="worker-form">
+<input type="hidden" id="worker-id">
+<div class="form-grid">
+<div class="form-group">
+<label>Worker Name *</label>
+<input type="text" id="name" required placeholder="John Smith">
+</div>
+<div class="form-group">
+<label>Role / Job Title</label>
+<input type="text" id="role" placeholder="Electrician">
+</div>
+<div class="form-group">
+<label>NFC Tag ID *</label>
+<input type="text" id="nfc-tag" required placeholder="Tap card to read or type manually">
+<button type="button" class="btn-secondary btn-small" style="margin-top:8px;" onclick="readNfcTag()">📡 Read NFC Tag</button>
+</div>
+<div class="form-group">
+<label>QR Code (optional)</label>
+<input type="text" id="qr-code" placeholder="Leave blank if using NFC only">
+</div>
+<div class="form-group full">
+<label>Phone Number (optional)</label>
+<input type="text" id="phone" placeholder="+44 7XXX XXXXXX">
+</div>
+<div class="form-group full">
+<label>Notes (optional)</label>
+<input type="text" id="notes" placeholder="Any additional info">
+</div>
+</div>
+<div class="btn-group">
+<button type="submit" class="btn-primary">💾 Save Worker</button>
+<button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
+</div>
+</form>
+</div>
+
+<div class="card">
+<h2>Registered Workers (<span id="worker-count">0</span>)</h2>
+<div id="worker-list" class="worker-list">
+<div class="empty">Loading workers...</div>
+</div>
+</div>
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey: const firebaseConfig = {
+  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
+  authDomain: "swiftcheck-ed24e.firebaseapp.com",
+  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "swiftcheck-ed24e",
+  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+  messagingSenderId: "918610814261",
+  appId: "1:918610814261:web:175b912556afc0d82e587c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const workersRef = db.ref('workers');
+
+const form = document.getElementById('worker-form');
+const workerList = document.getElementById('worker-list');
+const statusMsg = document.getElementById('status-msg');
+let workers = {};
+
+function showStatus(msg, type) {
+statusMsg.textContent = msg;
+statusMsg.className = 'status-msg status-' + type;
+setTimeout(() => { statusMsg.textContent = ''; statusMsg.className = ''; }, 3000);
+}
+
+function resetForm() {
+form.reset();
+document.getElementById('worker-id').value = '';
+document.getElementById('form-title').textContent = 'Add New Worker';
+}
+
+async function readNfcTag() {
+if (!('NDEFReader' in window)) {
+alert('NFC not supported on this device/browser. Use Android Chrome.');
+return;
+}
+try {
+const reader = new NDEFReader();
+reader.onreading = (event) => {
+let tagId = '';
+if (event.message && event.message.records) {
+for (const rec of event.message.records) {
+if (rec.recordType === 'text' || rec.recordType === 'url') {
+tagId = new TextDecoder(rec.encoding || 'utf-8').decode(rec.data).trim();
+break;
+}
+}
+}
+if (!tagId && event.serialNumber) tagId = 'NFC-' + event.serialNumber;
+if (tagId) {
+document.getElementById('nfc-tag').value = tagId;
+showStatus('NFC tag read: ' + tagId, 'success');
+}
+};
+await reader.scan();
+showStatus('NFC scanner active — tap a card', 'success');
+} catch (err) {
+alert('NFC error: ' + err.message);
+}
+}
+
+form.addEventListener('submit', async (e) => {
+e.preventDefault();
+const id = document.getElementById('worker-id').value;
+const worker = {
+name: document.getElementById('name').value.trim(),
+role: document.getElementById('role').value.trim(),
+nfcTag: document.getElementById('nfc-tag').value.trim(),
+qrCode: document.getElementById('qr-code').value.trim(),
+phone: document.getElementById('phone').value.trim(),
+notes: document.getElementById('notes').value.trim(),
+active: true,
+createdAt: id ? workers[id].createdAt : firebase.database.ServerValue.TIMESTAMP,
+updatedAt: firebase.database.ServerValue.TIMESTAMP
+};
+
+try {
+if (id) {
+await workersRef.child(id).update(worker);
+showStatus('Worker updated ✓', 'success');
+} else {
+await workersRef.push(worker);
+showStatus('Worker added ✓', 'success');
+}
+resetForm();
+} catch (err) {
+showStatus('Error: ' + err.message, 'error');
+}
+});
+
+function editWorker(id) {
+const w = workers[id];
+document.getElementById('worker-id').value = id;
+document.getElementById('name').value = w.name || '';
+document.getElementById('role').value = w.role || '';
+document.getElementById('nfc-tag').value = w.nfcTag || '';
+document.getElementById('qr-code').value = w.qrCode || '';
+document.getElementById('phone').value = w.phone || '';
+document.getElementById('notes').value = w.notes || '';
+document.getElementById('form-title').textContent = 'Edit Worker';
+window.scrollTo(0, 0);
+}
+
+async function deleteWorker(id) {
+if (!confirm('Delete this worker? This cannot be undone.')) return;
+try {
+await workersRef.child(id).remove();
+showStatus('Worker deleted ✓', 'success');
+} catch (err) {
+showStatus('Error: ' + err.message, 'error');
+}
+}
+
+function renderWorkers() {
+const list = Object.entries(workers).map(([id, w]) => ({ id, ...w }));
+document.getElementById('worker-count').textContent = list.length;
+
+if (list.length === 0) {
+workerList.innerHTML = '<div class="empty">No workers registered yet. Add your first worker above.</div>';
+return;
+}
+
+list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+workerList.innerHTML = list.map(w => `
+<div class="worker-item">
+<div class="worker-info">
+<div class="worker-name">${w.name || 'Unnamed'}</div>
+<div class="worker-details">
+${w.role ? `<strong>${w.role}</strong> · ` : ''}
+NFC: <code>${w.nfcTag || '—'}</code>
+${w.phone ? ` · 📞 ${w.phone}` : ''}
+</div>
+</div>
+<div class="worker-actions">
+<button class="btn-primary btn-small" onclick="editWorker('${w.id}')">✏️ Edit</button>
+<button class="btn-danger btn-small" onclick="deleteWorker('${w.id}')">🗑 Delete</button>
+</div>
+</div>
+`).join('');
+}
+
+workersRef.on('value', snap => {
+workers = {};
+snap.forEach(child => { workers[child.key] = child.val(); });
+renderWorkers();
+});
+</script>
+</body>
+</html>
+

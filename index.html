@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SwiftCheck · Site Terminal</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; background:#020617; color:#f1f5f9;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+.container { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
+header { text-align:center; padding:16px 0 24px; border-bottom:1px solid #1e293b; margin-bottom:20px; }
+header h1 { margin:0; font-size:22px; letter-spacing:1px; }
+header p { margin:6px 0 0; font-size:12px; color:#64748b; letter-spacing:2px; text-transform:uppercase; }
+.onsite-banner {
+background: linear-gradient(135deg,#059669,#10b981);
+padding:18px; border-radius:14px; text-align:center; margin-bottom:16px;
+box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+}
+.onsite-banner .count { font-size:48px; font-weight:800; line-height:1; }
+.onsite-banner .label { font-size:12px; letter-spacing:2px; text-transform:uppercase; opacity:0.9; margin-top:4px; }
+.card { background:#1e293b; padding:18px; border-radius:14px; margin-bottom:16px; border:1px solid #293548; }
+.card h2 { margin:0 0 12px; font-size:14px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+input[type="text"] { width:100%; padding:14px 16px; border-radius:10px; border:1px solid #334155;
+background:#0f172a; color:#fff; font-size:16px; margin-bottom:10px; outline:none; }
+input[type="text"]:focus { border-color:#4f46e5; }
+button { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:16px;
+border-radius:10px; border:none; font-weight:700; font-size:15px; letter-spacing:0.5px;
+cursor:pointer; color:#fff; margin-bottom:10px; transition:transform 0.1s, opacity 0.2s; font-family:inherit; }
+button:active { transform:scale(0.98); }
+button:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-primary { background:#4f46e5; }
+.btn-nfc { background:#0891b2; }
+.btn-nfc.scanning { background:#f59e0b; animation:pulse 1.5s infinite; }
+.btn-qr { background:#059669; }
+.btn-qr.scanning { background:#dc2626; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.5);} 50%{box-shadow:0 0 0 12px rgba(245,158,11,0);} }
+.icon { width:22px; height:22px; flex-shrink:0; }
+#qr-reader { width:100%; border-radius:10px; overflow:hidden; margin-bottom:10px; background:#000; }
+#status { padding:14px; border-radius:10px; text-align:center; font-size:14px; font-weight:600;
+margin-bottom:16px; min-height:48px; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+.status-idle { background:#1e293b; color:#64748b; border:1px dashed #334155; }
+.status-scanning { background:#fef3c7; color:#78350f; border:1px solid #f59e0b; }
+.status-success { background:#064e3b; color:#6ee7b7; border:1px solid #10b981; }
+.status-error { background:#7f1d1d; color:#fca5a5; border:1px solid #ef4444; }
+.status-loading { background:#1e3a8a; color:#93c5fd; border:1px solid #3b82f6; }
+#log { background:#000; padding:12px; font-family:"SF Mono",Menlo,monospace; font-size:11px; color:#38bdf8;
+height:140px; overflow-y:auto; border-radius:10px; border:1px solid #1e293b; }
+#log div { padding:2px 0; border-bottom:1px solid #0f172a; word-break:break-all; }
+#log .err { color:#f87171; }
+#log .ok { color:#4ade80; }
+.hint { font-size:12px; color:#64748b; margin:-4px 0 12px; line-height:1.4; }
+.footer { text-align:center; font-size:11px; color:#475569; margin-top:20px; }
+.recent-item { background:#0f172a; padding:10px 12px; border-radius:8px; margin-bottom:6px;
+display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+.recent-item .info { flex:1; }
+.recent-item .name { font-weight:600; color:#f1f5f9; }
+.recent-item .action { font-size:11px; margin-top:2px; }
+.recent-item .action.in { color:#10b981; }
+.recent-item .action.out { color:#f59e0b; }
+.recent-item .time { color:#64748b; font-size:11px; }
+.worker-lookup { background:#0f172a; padding:12px; border-radius:8px; margin-top:10px; }
+.worker-lookup .name { font-size:16px; font-weight:700; color:#10b981; }
+.worker-lookup .role { font-size:12px; color:#94a3b8; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>⚡ SWIFTCHECK</h1>
+<p id="site-title">Site Terminal</p>
+</header>
+
+<div class="onsite-banner">
+<div class="count" id="onsite-count">—</div>
+<div class="label" id="onsite-label">Workers on site today</div>
+</div>
+
+<div id="status" class="status-idle" id="status-text">Ready — tap NFC card or scan QR code</div>
+
+<div class="card">
+<h2 id="nfc-title">NFC Card Scan</h2>
+<p class="hint" id="nfc-hint">Hold your card against the back of the phone to sign in or out.</p>
+<button type="button" class="btn-nfc" id="btn-nfc">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12c0-4.4 3.6-8 8-8M8 12c0-2.2 1.8-4 4-4M12 12h.01M20 12c0 4.4-3.6 8-8 8M16 12c0 2.2-1.8 4-4 4"/></svg>
+<span id="nfc-label">START NFC SCAN</span>
+</button>
+<div id="worker-lookup" class="worker-lookup" style="display:none;">
+<div class="name" id="lookup-name"></div>
+<div class="role" id="lookup-role"></div>
+</div>
+</div>
+
+<div class="card">
+<h2 id="qr-title">QR Code Scan</h2>
+<p class="hint" id="qr-hint">Point the camera at your QR code.</p>
+<div id="qr-reader" style="display:none;"></div>
+<button type="button" class="btn-qr" id="btn-qr">
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v1"/></svg>
+<span id="qr-label">OPEN CAMERA</span>
+</button>
+</div>
+
+<div class="card">
+<h2>Recent Activity</h2>
+<div id="recent-list"><div class="hint">No activity yet today.</div></div>
+</div>
+
+<div class="card">
+<h2>Activity Log</h2>
+<div id="log"></div>
+</div>
+
+<div class="footer">SwiftCheck · Tap to enter or leave</div>
+</div>
+
+<script>
+/* ============================================================
+🔧 CONFIGURATION — CUSTOMIZE WORDING HERE
+============================================================ */
+const CONFIG = {
+siteTitle: "Site Terminal", // Header subtitle
+onsiteLabel: "Workers on site today", // Big green banner text
+nfcTitle: "NFC Card Scan", // NFC section title
+nfcHint: "Hold your card against the back of the phone to sign in or out.",
+qrTitle: "QR Code Scan", // QR section title
+qrHint: "Point the camera at your QR code.",
+statusReady: "Ready — tap NFC card or scan QR code",
+actionIn: "IN SITE OFFICE", // What it says when signing in
+actionOut: "LEFT SITE", // What it says when signing out
+unknownWorker: "Unknown Worker" // If NFC tag not found in database
+};
+
+/* ============================================================
+🔧 PASTE YOUR FIREBASE CONFIG HERE
+============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
+  authDomain: "swiftcheck-ed24e.firebaseapp.com",
+  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "swiftcheck-ed24e",
+  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+  messagingSenderId: "918610814261",
+  appId: "1:918610814261:web:175b912556afc0d82e587c"
+};/* ============================================================ */
+
+// Apply config to page
+document.getElementById('site-title').textContent = CONFIG.siteTitle;
+document.getElementById('onsite-label').textContent = CONFIG.onsiteLabel;
+document.getElementById('nfc-title').textContent = CONFIG.nfcTitle;
+document.getElementById('nfc-hint').textContent = CONFIG.nfcHint;
+document.getElementById('qr-title').textContent = CONFIG.qrTitle;
+document.getElementById('qr-hint').textContent = CONFIG.qrHint;
+document.getElementById('status').textContent = CONFIG.statusReady;
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const workersRef = db.ref('workers');
+const signinsRef = db.ref('signins');
+const statusRef = db.ref('status');
+
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+const btnNfc = document.getElementById('btn-nfc');
+const nfcLabel = document.getElementById('nfc-label');
+const btnQr = document.getElementById('btn-qr');
+const qrLabel = document.getElementById('qr-label');
+const qrReaderEl = document.getElementById('qr-reader');
+const onsiteEl = document.getElementById('onsite-count');
+const recentEl = document.getElementById('recent-list');
+const lookupEl = document.getElementById('worker-lookup');
+const lookupName = document.getElementById('lookup-name');
+const lookupRole = document.getElementById('lookup-role');
+
+let nfcReader = null, nfcScanning = false;
+let qrScanner = null, qrScanning = false;
+let workersCache = {};
+
+function todayStart() {
+const d = new Date(); d.setHours(0,0,0,0);
+return d.getTime();
+}
+
+function log(msg, type) {
+const time = new Date().toLocaleTimeString();
+const div = document.createElement('div');
+if (type === 'err') div.className = 'err';
+if (type === 'ok') div.className = 'ok';
+div.textContent = '[' + time + '] ' + msg;
+logEl.insertBefore(div, logEl.firstChild);
+}
+
+function setStatus(text, cls) {
+statusEl.textContent = text;
+statusEl.className = 'status-' + cls;
+}
+
+function escapeHtml(s) {
+return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Load workers into cache
+workersRef.on('value', snap => {
+workersCache = {};
+snap.forEach(child => {
+workersCache[child.key] = child.val();
+});
+log('Loaded ' + Object.keys(workersCache).length + ' workers');
+});
+
+// Live counter + recent list
+signinsRef.orderByChild('timestamp').on('value', snap => {
+const today = todayStart();
+const todays = [];
+snap.forEach(child => {
+const v = child.val();
+if (v.timestamp && v.timestamp >= today) todays.push({ id: child.key, ...v });
+});
+
+// Count currently on site
+const onSiteNow = todays.filter(t => t.action === 'IN').length - todays.filter(t => t.action === 'OUT').length;
+onsiteEl.textContent = Math.max(0, onSiteNow);
+
+// Show last 5 (most recent first)
+const last5 = todays.slice(-5).reverse();
+if (last5.length === 0) {
+recentEl.innerHTML = '<div class="hint">No activity yet today.</div>';
+} else {
+recentEl.innerHTML = last5.map(s => {
+const t = new Date(s.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+const actionClass = s.action === 'IN' ? 'in' : 'out';
+const actionText = s.action === 'IN' ? CONFIG.actionIn : CONFIG.actionOut;
+return `<div class="recent-item">
+<div class="info">
+<div class="name">${escapeHtml(s.workerName || 'Unknown')}</div>
+<div class="action ${actionClass}">${actionText} · ${s.method}</div>
+</div>
+<div class="time">${t}</div>
+</div>`;
+}).join('');
+}
+});
+
+async function processScan(tagId, method) {
+if (!tagId || !tagId.trim()) {
+setStatus('❌ Empty tag — please try again', 'error');
+return;
+}
+tagId = tagId.trim();
+
+// Look up worker by NFC tag or QR code
+let worker = null;
+let workerId = null;
+
+for (const [id, data] of Object.entries(workersCache)) {
+if (data.nfcTag === tagId || data.qrCode === tagId || id === tagId) {
+worker = data;
+workerId = id;
+break;
+}
+}
+
+if (!worker) {
+setStatus('❌ Unknown tag: ' + tagId, 'error');
+log('Tag not found in worker database: ' + tagId, 'err');
+lookupEl.style.display = 'none';
+return;
+}
+
+// Show worker info
+lookupName.textContent = worker.name || workerId;
+lookupRole.textContent = worker.role || '';
+lookupEl.style.display = 'block';
+
+// Check current status
+const workerStatus = await statusRef.child(workerId).once('value');
+const currentStatus = workerStatus.val();
+const isOnSite = currentStatus && currentStatus.onSite;
+
+const action = isOnSite ? 'OUT' : 'IN';
+const actionText = action === 'IN' ? CONFIG.actionIn : CONFIG.actionOut;
+
+setStatus('⏳ Recording ' + actionText + '...', 'loading');
+log((worker.name || workerId) + ' → ' + actionText);
+
+try {
+// Record the sign-in/out
+const record = {
+workerId: workerId,
+workerName: worker.name || workerId,
+workerRole: worker.role || '',
+action: action,
+method: method,
+timestamp: firebase.database.ServerValue.TIMESTAMP,
+date: new Date().toISOString().slice(0,10)
+};
+await signinsRef.push(record);
+
+// Update current status
+await statusRef.child(workerId).set({
+onSite: action === 'IN',
+lastAction: action,
+lastTimestamp: firebase.database.ServerValue.TIMESTAMP
+});
+
+setStatus('✅ ' + (worker.name || workerId) + ' — ' + actionText, 'success');
+log('Saved ✓', 'ok');
+if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+setTimeout(() => {
+lookupEl.style.display = 'none';
+setStatus(CONFIG.statusReady, 'idle');
+}, 3000);
+} catch (err) {
+setStatus('❌ Error: ' + err.message, 'error');
+log('Firebase error: ' + err.message, 'err');
+}
+}
+
+// NFC
+function startNfc() {
+if (!('NDEFReader' in window)) {
+setStatus('❌ NFC not supported on this device', 'error');
+log('Web NFC requires Android Chrome', 'err');
+return;
+}
+try {
+nfcReader = new NDEFReader();
+nfcReader.onreading = (event) => {
+let tagId = '';
+if (event.message && event.message.records) {
+for (const rec of event.message.records) {
+if (rec.recordType === 'text' || rec.recordType === 'url') {
+tagId = new TextDecoder(rec.encoding || 'utf-8').decode(rec.data).trim();
+break;
+}
+}
+}
+if (!tagId && event.serialNumber) tagId = 'NFC-' + event.serialNumber;
+if (tagId) {
+log('NFC tag: ' + tagId, 'ok');
+processScan(tagId, 'NFC');
+} else {
+log('NFC tag empty', 'err');
+}
+};
+nfcReader.onreadingerror = () => { log('NFC read error', 'err'); };
+nfcReader.scan().then(() => {
+nfcScanning = true;
+btnNfc.classList.add('scanning');
+nfcLabel.textContent = 'SCANNING... TAP A CARD';
+setStatus('📡 NFC active — hold card to phone', 'scanning');
+log('NFC scanner active');
+}).catch(err => {
+log('NFC failed: ' + err.message, 'err');
+setStatus('❌ NFC blocked: ' + err.message, 'error');
+});
+} catch (err) { log('NFC error: ' + err.message, 'err'); }
+}
+function stopNfc() {
+if (nfcReader) { try { nfcReader.abort(); } catch(e){} nfcReader = null; }
+nfcScanning = false;
+btnNfc.classList.remove('scanning');
+nfcLabel.textContent = 'START NFC SCAN';
+setStatus(CONFIG.statusReady, 'idle');
+}
+btnNfc.addEventListener('click', () => nfcScanning ? stopNfc() : startNfc());
+
+// QR
+function startQr() {
+if (qrScanning) return;
+qrReaderEl.style.display = 'block';
+qrScanner = new Html5Qrcode("qr-reader");
+qrScanner.start(
+{ facingMode: "environment" },
+{ fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+(decodedText) => {
+log('QR: ' + decodedText, 'ok');
+processScan(decodedText, 'QR');
+if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+stopQr();
+},
+() => {}
+).then(() => {
+qrScanning = true;
+btnQr.classList.add('scanning');
+qrLabel.textContent = 'STOP CAMERA';
+setStatus('📷 Scanning QR — point at code', 'scanning');
+}).catch(err => {
+log('Camera error: ' + err.message, 'err');
+setStatus('❌ Camera error: ' + err.message, 'error');
+qrReaderEl.style.display = 'none';
+});
+}
+function stopQr() {
+if (qrScanner && qrScanning) { qrScanner.stop().then(() => qrScanner.clear()).catch(()=>{}); }
+qrScanning = false; qrScanner = null;
+btnQr.classList.remove('scanning');
+qrLabel.textContent = 'OPEN CAMERA';
+qrReaderEl.style.display = 'none';
+setStatus(CONFIG.statusReady, 'idle');
+}
+btnQr.addEventListener('click', () => qrScanning ? stopQr() : startQr());
+
+log('SwiftCheck started');
+</script>
+</body>
+</html>
+

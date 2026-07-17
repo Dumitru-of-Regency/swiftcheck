@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwiftCheck · Office Dashboard</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:0; background:#020617; color:#f1f5f9;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+.container { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+header { display:flex; justify-content:space-between; align-items:center;
+padding:0 0 20px; border-bottom:1px solid #1e293b; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+header h1 { margin:0; font-size:22px; letter-spacing:1px; }
+header h1 span { color:#10b981; }
+.live-badge { display:inline-flex; align-items:center; gap:8px; background:#064e3b;
+color:#6ee7b7; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:1px; }
+.live-dot { width:8px; height:8px; background:#10b981; border-radius:50%; animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
+.stat { background:#1e293b; padding:20px; border-radius:14px; border:1px solid #293548; }
+.stat .num { font-size:42px; font-weight:800; line-height:1; }
+.stat .lbl { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1.5px; margin-top:8px; }
+.stat.green .num { color:#10b981; }
+.stat.blue .num { color:#38bdf8; }
+.stat.amber .num { color:#f59e0b; }
+.stat.purple .num { color:#a78bfa; }
+
+.tabs { display:flex; gap:8px; margin-bottom:16px; }
+.tab { padding:10px 20px; background:#1e293b; border:1px solid #293548; border-radius:10px;
+cursor:pointer; font-weight:600; font-size:13px; color:#94a3b8; transition:all 0.2s; }
+.tab:hover { background:#293548; }
+.tab.active { background:#4f46e5; color:#fff; border-color:#4f46e5; }
+
+.controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.controls input { flex:1; min-width:200px; padding:12px 16px; border-radius:10px;
+border:1px solid #334155; background:#0f172a; color:#fff; font-size:14px; outline:none; }
+.controls input:focus { border-color:#4f46e5; }
+.controls button { padding:12px 20px; border-radius:10px; border:none; font-weight:600;
+cursor:pointer; color:#fff; font-size:13px; font-family:inherit; }
+.btn-export { background:#0891b2; }
+.btn-clear { background:#dc2626; }
+.btn-refresh { background:#4f46e5; }
+
+.table-wrap { background:#1e293b; border-radius:14px; border:1px solid #293548; overflow:hidden; }
+table { width:100%; border-collapse:collapse; }
+thead th { background:#0f172a; padding:14px 16px; text-align:left; font-size:11px;
+color:#94a3b8; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; border-bottom:1px solid #293548; }
+tbody td { padding:14px 16px; border-bottom:1px solid #0f172a; font-size:14px; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover { background:#293548; }
+tbody tr.recent { background:rgba(16,185,129,0.08); }
+.worker-name { font-weight:700; color:#f1f5f9; }
+.worker-role { font-size:11px; color:#94a3b8; margin-top:2px; }
+.action-badge { display:inline-block; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:700; letter-spacing:0.5px; }
+.action-IN { background:#064e3b; color:#6ee7b7; }
+.action-OUT { background:#78350f; color:#fcd34d; }
+.method-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; letter-spacing:0.5px; margin-left:6px; }
+.method-NFC { background:#164e63; color:#67e8f9; }
+.method-QR { background:#14532d; color:#86efac; }
+.time-cell { color:#94a3b8; font-family:"SF Mono",Menlo,monospace; font-size:13px; }
+.fresh-indicator { display:inline-block; width:8px; height:8px; background:#10b981; border-radius:50%; margin-right:8px; animation:blink 1.5s infinite; }
+.empty { padding:40px; text-align:center; color:#64748b; }
+.footer { text-align:center; font-size:11px; color:#475569; margin-top:24px; }
+
+@media (max-width:600px) {
+thead { display:none; }
+tbody tr { display:block; padding:12px 16px; border-bottom:1px solid #0f172a; }
+tbody td { display:flex; justify-content:space-between; padding:4px 0; border:none; }
+tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>⚡ SWIFTCHECK <span>· Office</span></h1>
+<div class="live-badge"><span class="live-dot"></span>LIVE · <span id="last-update">connecting...</span></div>
+</header>
+
+<div class="stats">
+<div class="stat green"><div class="num" id="stat-onsite">—</div><div class="lbl">Currently On Site</div></div>
+<div class="stat blue"><div class="num" id="stat-total">—</div><div class="lbl">Total Sign-Ins Today</div></div>
+<div class="stat amber"><div class="num" id="stat-recent">—</div><div class="lbl">Last 15 Minutes</div></div>
+<div class="stat purple"><div class="num" id="stat-unique">—</div><div class="lbl">Unique Workers</div></div>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab('activity')">Activity Log</div>
+<div class="tab" onclick="switchTab('onsite')">Currently On Site</div>
+</div>
+
+<div class="controls">
+<input type="text" id="search" placeholder="🔍 Filter by name or role...">
+<button type="button" class="btn-refresh" onclick="location.reload()">↻ Refresh</button>
+<button type="button" class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+<button type="button" class="btn-clear" onclick="clearToday()">🗑 Clear Today</button>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Worker</th>
+<th>Action</th>
+<th>Time</th>
+<th>Elapsed</th>
+</tr>
+</thead>
+<tbody id="tbody"><tr><td colspan="5" class="empty">Connecting to database...</td></tr></tbody>
+</table>
+</div>
+
+<div class="footer">SwiftCheck Office Dashboard · Auto-updates in real time</div>
+</div>
+
+<script>
+const firebaseConfig = {
+apiKey: const firebaseConfig = {
+  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
+  authDomain: "swiftcheck-ed24e.firebaseapp.com",
+  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "swiftcheck-ed24e",
+  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+  messagingSenderId: "918610814261",
+  appId: "1:918610814261:web:175b912556afc0d82e587c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const signinsRef = db.ref('signins');
+const statusRef = db.ref('status');
+
+const tbody = document.getElementById('tbody');
+const searchInput = document.getElementById('search');
+let allRecords = [];
+let workerStatus = {};
+let filterText = '';
+let currentTab = 'activity';
+
+function todayStart() { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
+
+function escapeHtml(s) {
+return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function timeAgo(ts) {
+const s = Math.floor((Date.now() - ts) / 1000);
+if (s < 60) return s + 's ago';
+if (s < 3600) return Math.floor(s/60) + 'm ago';
+if (s < 86400) return Math.floor(s/3600) + 'h ago';
+return Math.floor(s/86400) + 'd ago';
+}
+
+function switchTab(tab) {
+currentTab = tab;
+document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+event.target.classList.add('active');
+render();
+}
+
+function render() {
+const today = todayStart();
+const todays = allRecords.filter(r => r.timestamp >= today);
+
+// Stats
+const onSiteNow = Object.values(workerStatus).filter(s => s.onSite).length;
+document.getElementById('stat-onsite').textContent = onSiteNow;
+document.getElementById('stat-total').textContent = todays.length;
+document.getElementById('stat-recent').textContent = todays.filter(r => Date.now() - r.timestamp < 15*60*1000).length;
+document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.workerId)).size;
+
+let displayRecords = [];
+
+if (currentTab === 'activity') {
+displayRecords = todays;
+} else if (currentTab === 'onsite') {
+// Show only workers currently on site
+displayRecords = todays.filter(r => {
+const status = workerStatus[r.workerId];
+return status && status.onSite;
+});
+// Deduplicate — show only latest action per worker
+const latest = {};
+displayRecords.forEach(r => {
+if (!latest[r.workerId] || r.timestamp > latest[r.workerId].timestamp) {
+latest[r.workerId] = r;
+}
+});
+displayRecords = Object.values(latest);
+}
+
+// Filter
+if (filterText) {
+displayRecords = displayRecords.filter(r =>
+String(r.workerName).toLowerCase().includes(filterText) ||
+String(r.workerRole).toLowerCase().includes(filterText)
+);
+}
+
+// Sort most recent first
+displayRecords.sort((a,b) => b.timestamp - a.timestamp);
+
+if (displayRecords.length === 0) {
+const msg = filterText ? 'No matches for "' + escapeHtml(filterText) + '"' :
+currentTab === 'onsite' ? 'No workers currently on site.' : 'No activity today yet.';
+tbody.innerHTML = `<tr><td colspan="5" class="empty">${msg}</td></tr>`;
+return;
+}
+
+tbody.innerHTML = displayRecords.map(r => {
+const t = new Date(r.timestamp);
+const timeStr = t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+const fresh = (Date.now() - r.timestamp) < 5*60*1000;
+const rowClass = fresh ? 'recent' : '';
+return `<tr class="${rowClass}">
+<td data-label="Status">${fresh ? '<span class="fresh-indicator"></span>Fresh' : '—'}</td>
+<td data-label="Worker">
+<div class="worker-name">${escapeHtml(r.workerName || 'Unknown')}</div>
+${r.workerRole ? `<div class="worker-role">${escapeHtml(r.workerRole)}</div>` : ''}
+</td>
+<td data-label="Action">
+<span class="action-badge action-${r.action}">${r.action}</span>
+<span class="method-badge method-${r.method}">${r.method}</span>
+</td>
+<td data-label="Time" class="time-cell">${timeStr}</td>
+<td data-label="Elapsed" class="time-cell">${timeAgo(r.timestamp)}</td>
+</tr>`;
+}).join('');
+}
+
+// Live listeners
+signinsRef.on('value', snap => {
+allRecords = [];
+snap.forEach(child => { allRecords.push({ id: child.key, ...child.val() }); });
+document.getElementById('last-update').textContent = 'updated ' + new Date().toLocaleTimeString();
+render();
+});
+
+statusRef.on('value', snap => {
+workerStatus = {};
+snap.forEach(child => { workerStatus[child.key] = child.val(); });
+render();
+});
+
+setInterval(render, 30000);
+
+searchInput.addEventListener('input', e => {
+filterText = e.target.value.trim().toLowerCase();
+render();
+});
+
+function exportCSV() {
+const today = todayStart();
+const todays = allRecords.filter(r => r.timestamp >= today);
+if (todays.length === 0) { alert('No records to export.'); return; }
+let csv = 'Worker Name,Role,Action,Method,Timestamp,Time\n';
+todays.forEach(r => {
+const t = new Date(r.timestamp).toISOString();
+csv += `"${r.workerName}","${r.workerRole}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
+});
+const blob = new Blob([csv], { type: 'text/csv' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'swiftcheck-' + new Date().toISOString().slice(0,10) + '.csv';
+a.click();
+URL.revokeObjectURL(url);
+}
+
+async function clearToday() {
+if (!confirm('Delete ALL records from today? This cannot be undone.')) return;
+if (!confirm('Are you really sure?')) return;
+const today = todayStart();
+const updates = {};
+allRecords.forEach(r => {
+if (r.timestamp >= today) updates[r.id] = null;
+});
+try {
+await db.ref().update(updates);
+alert('Today\'s records cleared.');
+} catch (err) {
+alert('Error: ' + err.message);
+}
+}
+</script>
+</body>
+</html>
+
