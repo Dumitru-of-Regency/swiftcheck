@@ -31,13 +31,13 @@ cursor:pointer; color:#fff; font-size:14px; font-family:inherit; }
 .btn-danger { background:#dc2626; }
 .btn-small { padding:8px 14px; font-size:12px; }
 .btn-group { display:flex; gap:10px; }
-.worker-list { margin-top:20px; }
-.worker-item { background:#0f172a; padding:16px; border-radius:10px; margin-bottom:10px;
+.operative-list { margin-top:20px; }
+.operative-item { background:#0f172a; padding:16px; border-radius:10px; margin-bottom:10px;
 display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-.worker-info { flex:1; min-width:200px; }
-.worker-name { font-size:16px; font-weight:700; color:#f1f5f9; }
-.worker-details { font-size:12px; color:#94a3b8; margin-top:4px; }
-.worker-actions { display:flex; gap:8px; }
+.operative-info { flex:1; min-width:200px; }
+.operative-name { font-size:16px; font-weight:700; color:#f1f5f9; }
+.operative-details { font-size:12px; color:#94a3b8; margin-top:4px; }
+.operative-actions { display:flex; gap:8px; }
 .empty { padding:40px; text-align:center; color:#64748b; }
 .status-msg { padding:12px; border-radius:8px; margin-bottom:16px; text-align:center; font-weight:600; }
 .status-success { background:#064e3b; color:#6ee7b7; }
@@ -57,8 +57,8 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 
 <div class="card">
 <h2 id="form-title">Add New Worker</h2>
-<form id="worker-form">
-<input type="hidden" id="worker-id">
+<form id="operative-form">
+<input type="hidden" id="operative-id">
 <div class="form-grid">
 <div class="form-group">
 <label>Worker Name *</label>
@@ -94,8 +94,8 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 </div>
 
 <div class="card">
-<h2>Registered Workers (<span id="worker-count">0</span>)</h2>
-<div id="worker-list" class="worker-list">
+<h2>Registered Workers (<span id="operative-count">0</span>)</h2>
+<div id="operative-list" class="operative-list">
 <div class="empty">Loading workers...</div>
 </div>
 </div>
@@ -117,8 +117,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const workersRef = db.ref('workers');
 
-const form = document.getElementById('worker-form');
-const workerList = document.getElementById('worker-list');
+const form = document.getElementById('operative-form');
+const workerList = document.getElementById('operative-list');
 const statusMsg = document.getElementById('status-msg');
 let workers = {};
 
@@ -130,7 +130,7 @@ setTimeout(() => { statusMsg.textContent = ''; statusMsg.className = ''; }, 3000
 
 function resetForm() {
 form.reset();
-document.getElementById('worker-id').value = '';
+document.getElementById('operative-id').value = '';
 document.getElementById('form-title').textContent = 'Add New Worker';
 }
 
@@ -166,8 +166,8 @@ alert('NFC error: ' + err.message);
 
 form.addEventListener('submit', async (e) => {
 e.preventDefault();
-const id = document.getElementById('worker-id').value;
-const worker = {
+const id = document.getElementById('operative-id').value;
+const operative = {
 name: document.getElementById('name').value.trim(),
 role: document.getElementById('role').value.trim(),
 nfcTag: document.getElementById('nfc-tag').value.trim(),
@@ -181,10 +181,10 @@ updatedAt: firebase.database.ServerValue.TIMESTAMP
 
 try {
 if (id) {
-await workersRef.child(id).update(worker);
+await workersRef.child(id).update(operative);
 showStatus('Worker updated ✓', 'success');
 } else {
-await workersRef.push(worker);
+await workersRef.push(operative);
 showStatus('Worker added ✓', 'success');
 }
 resetForm();
@@ -195,7 +195,7 @@ showStatus('Error: ' + err.message, 'error');
 
 function editWorker(id) {
 const w = workers[id];
-document.getElementById('worker-id').value = id;
+document.getElementById('operative-id').value = id;
 document.getElementById('name').value = w.name || '';
 document.getElementById('role').value = w.role || '';
 document.getElementById('nfc-tag').value = w.nfcTag || '';
@@ -207,7 +207,7 @@ window.scrollTo(0, 0);
 }
 
 async function deleteWorker(id) {
-if (!confirm('Delete this worker? This cannot be undone.')) return;
+if (!confirm('Delete this operative? This cannot be undone.')) return;
 try {
 await workersRef.child(id).remove();
 showStatus('Worker deleted ✓', 'success');
@@ -218,26 +218,26 @@ showStatus('Error: ' + err.message, 'error');
 
 function renderWorkers() {
 const list = Object.entries(workers).map(([id, w]) => ({ id, ...w }));
-document.getElementById('worker-count').textContent = list.length;
+document.getElementById('operative-count').textContent = list.length;
 
 if (list.length === 0) {
-workerList.innerHTML = '<div class="empty">No workers registered yet. Add your first worker above.</div>';
+workerList.innerHTML = '<div class="empty">No workers registered yet. Add your first operative above.</div>';
 return;
 }
 
 list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
 workerList.innerHTML = list.map(w => `
-<div class="worker-item">
-<div class="worker-info">
-<div class="worker-name">${w.name || 'Unnamed'}</div>
-<div class="worker-details">
+<div class="operative-item">
+<div class="operative-info">
+<div class="operative-name">${w.name || 'Unnamed'}</div>
+<div class="operative-details">
 ${w.role ? `<strong>${w.role}</strong> · ` : ''}
 NFC: <code>${w.nfcTag || '—'}</code>
 ${w.phone ? ` · 📞 ${w.phone}` : ''}
 </div>
 </div>
-<div class="worker-actions">
+<div class="operative-actions">
 <button class="btn-primary btn-small" onclick="editWorker('${w.id}')">✏️ Edit</button>
 <button class="btn-danger btn-small" onclick="deleteWorker('${w.id}')">🗑 Delete</button>
 </div>
