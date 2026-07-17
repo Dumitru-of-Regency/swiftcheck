@@ -56,12 +56,12 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 <div id="status-msg"></div>
 
 <div class="card">
-<h2 id="form-title">Add New Worker</h2>
+<h2 id="form-title">Add New operative</h2>
 <form id="operative-form">
 <input type="hidden" id="operative-id">
 <div class="form-grid">
 <div class="form-group">
-<label>Worker Name *</label>
+<label>operative Name *</label>
 <input type="text" id="name" required placeholder="John Smith">
 </div>
 <div class="form-group">
@@ -87,16 +87,16 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 </div>
 </div>
 <div class="btn-group">
-<button type="submit" class="btn-primary">💾 Save Worker</button>
+<button type="submit" class="btn-primary">💾 Save operative</button>
 <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
 </div>
 </form>
 </div>
 
 <div class="card">
-<h2>Registered Workers (<span id="operative-count">0</span>)</h2>
+<h2>Registered operatives (<span id="operative-count">0</span>)</h2>
 <div id="operative-list" class="operative-list">
-<div class="empty">Loading workers...</div>
+<div class="empty">Loading operatives...</div>
 </div>
 </div>
 </div>
@@ -114,12 +114,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const workersRef = db.ref('workers');
+const operativesRef = db.ref('operatives');
 
 const form = document.getElementById('operative-form');
-const workerList = document.getElementById('operative-list');
+const operativeList = document.getElementById('operative-list');
 const statusMsg = document.getElementById('status-msg');
-let workers = {};
+let operatives = {};
 
 function showStatus(msg, type) {
 statusMsg.textContent = msg;
@@ -130,7 +130,7 @@ setTimeout(() => { statusMsg.textContent = ''; statusMsg.className = ''; }, 3000
 function resetForm() {
 form.reset();
 document.getElementById('operative-id').value = '';
-document.getElementById('form-title').textContent = 'Add New Worker';
+document.getElementById('form-title').textContent = 'Add New operative';
 }
 
 async function readNfcTag() {
@@ -174,17 +174,17 @@ qrCode: document.getElementById('qr-code').value.trim(),
 phone: document.getElementById('phone').value.trim(),
 notes: document.getElementById('notes').value.trim(),
 active: true,
-createdAt: id ? workers[id].createdAt : firebase.database.ServerValue.TIMESTAMP,
+createdAt: id ? operatives[id].createdAt : firebase.database.ServerValue.TIMESTAMP,
 updatedAt: firebase.database.ServerValue.TIMESTAMP
 };
 
 try {
 if (id) {
-await workersRef.child(id).update(operative);
-showStatus('Worker updated ✓', 'success');
+await operativesRef.child(id).update(operative);
+showStatus('operative updated ✓', 'success');
 } else {
-await workersRef.push(operative);
-showStatus('Worker added ✓', 'success');
+await operativesRef.push(operative);
+showStatus('operative added ✓', 'success');
 }
 resetForm();
 } catch (err) {
@@ -192,8 +192,8 @@ showStatus('Error: ' + err.message, 'error');
 }
 });
 
-function editWorker(id) {
-const w = workers[id];
+function editoperative(id) {
+const w = operatives[id];
 document.getElementById('operative-id').value = id;
 document.getElementById('name').value = w.name || '';
 document.getElementById('role').value = w.role || '';
@@ -201,32 +201,32 @@ document.getElementById('nfc-tag').value = w.nfcTag || '';
 document.getElementById('qr-code').value = w.qrCode || '';
 document.getElementById('phone').value = w.phone || '';
 document.getElementById('notes').value = w.notes || '';
-document.getElementById('form-title').textContent = 'Edit Worker';
+document.getElementById('form-title').textContent = 'Edit operative';
 window.scrollTo(0, 0);
 }
 
-async function deleteWorker(id) {
+async function deleteoperative(id) {
 if (!confirm('Delete this operative? This cannot be undone.')) return;
 try {
-await workersRef.child(id).remove();
-showStatus('Worker deleted ✓', 'success');
+await operativesRef.child(id).remove();
+showStatus('operative deleted ✓', 'success');
 } catch (err) {
 showStatus('Error: ' + err.message, 'error');
 }
 }
 
-function renderWorkers() {
-const list = Object.entries(workers).map(([id, w]) => ({ id, ...w }));
+function renderoperatives() {
+const list = Object.entries(operatives).map(([id, w]) => ({ id, ...w }));
 document.getElementById('operative-count').textContent = list.length;
 
 if (list.length === 0) {
-workerList.innerHTML = '<div class="empty">No workers registered yet. Add your first operative above.</div>';
+operativeList.innerHTML = '<div class="empty">No operatives registered yet. Add your first operative above.</div>';
 return;
 }
 
 list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-workerList.innerHTML = list.map(w => `
+operativeList.innerHTML = list.map(w => `
 <div class="operative-item">
 <div class="operative-info">
 <div class="operative-name">${w.name || 'Unnamed'}</div>
@@ -237,17 +237,17 @@ ${w.phone ? ` · 📞 ${w.phone}` : ''}
 </div>
 </div>
 <div class="operative-actions">
-<button class="btn-primary btn-small" onclick="editWorker('${w.id}')">✏️ Edit</button>
-<button class="btn-danger btn-small" onclick="deleteWorker('${w.id}')">🗑 Delete</button>
+<button class="btn-primary btn-small" onclick="editoperative('${w.id}')">✏️ Edit</button>
+<button class="btn-danger btn-small" onclick="deleteoperative('${w.id}')">🗑 Delete</button>
 </div>
 </div>
 `).join('');
 }
 
-workersRef.on('value', snap => {
-workers = {};
-snap.forEach(child => { workers[child.key] = child.val(); });
-renderWorkers();
+operativesRef.on('value', snap => {
+operatives = {};
+snap.forEach(child => { operatives[child.key] = child.val(); });
+renderoperatives();
 });
 </script>
 </body>
