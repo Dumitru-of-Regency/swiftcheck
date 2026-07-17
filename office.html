@@ -53,8 +53,8 @@ tbody td { padding:14px 16px; border-bottom:1px solid #0f172a; font-size:14px; }
 tbody tr:last-child td { border-bottom:none; }
 tbody tr:hover { background:#293548; }
 tbody tr.recent { background:rgba(16,185,129,0.08); }
-.worker-name { font-weight:700; color:#f1f5f9; }
-.worker-role { font-size:11px; color:#94a3b8; margin-top:2px; }
+.operative-name { font-weight:700; color:#f1f5f9; }
+.operative-role { font-size:11px; color:#94a3b8; margin-top:2px; }
 .action-badge { display:inline-block; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:700; letter-spacing:0.5px; }
 .action-IN { background:#064e3b; color:#6ee7b7; }
 .action-OUT { background:#78350f; color:#fcd34d; }
@@ -85,7 +85,7 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 <div class="stat green"><div class="num" id="stat-onsite">—</div><div class="lbl">Currently On Site</div></div>
 <div class="stat blue"><div class="num" id="stat-total">—</div><div class="lbl">Total Sign-Ins Today</div></div>
 <div class="stat amber"><div class="num" id="stat-recent">—</div><div class="lbl">Last 15 Minutes</div></div>
-<div class="stat purple"><div class="num" id="stat-unique">—</div><div class="lbl">Unique Workers</div></div>
+<div class="stat purple"><div class="num" id="stat-unique">—</div><div class="lbl">Unique operatives</div></div>
 </div>
 
 <div class="tabs">
@@ -105,7 +105,7 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 <thead>
 <tr>
 <th>Status</th>
-<th>Worker</th>
+<th>operative</th>
 <th>Action</th>
 <th>Time</th>
 <th>Elapsed</th>
@@ -138,7 +138,7 @@ const statusRef = db.ref('status');
 const tbody = document.getElementById('tbody');
 const searchInput = document.getElementById('search');
 let allRecords = [];
-let workerStatus = {};
+let operativeStatus = {};
 let filterText = '';
 let currentTab = 'activity';
 
@@ -168,27 +168,27 @@ const today = todayStart();
 const todays = allRecords.filter(r => r.timestamp >= today);
 
 // Stats
-const onSiteNow = Object.values(workerStatus).filter(s => s.onSite).length;
+const onSiteNow = Object.values(operativeStatus).filter(s => s.onSite).length;
 document.getElementById('stat-onsite').textContent = onSiteNow;
 document.getElementById('stat-total').textContent = todays.length;
 document.getElementById('stat-recent').textContent = todays.filter(r => Date.now() - r.timestamp < 15*60*1000).length;
-document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.workerId)).size;
+document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.operativeId)).size;
 
 let displayRecords = [];
 
 if (currentTab === 'activity') {
 displayRecords = todays;
 } else if (currentTab === 'onsite') {
-// Show only workers currently on site
+// Show only operatives currently on site
 displayRecords = todays.filter(r => {
-const status = workerStatus[r.workerId];
+const status = operativeStatus[r.operativeId];
 return status && status.onSite;
 });
-// Deduplicate — show only latest action per worker
+// Deduplicate — show only latest action per operative
 const latest = {};
 displayRecords.forEach(r => {
-if (!latest[r.workerId] || r.timestamp > latest[r.workerId].timestamp) {
-latest[r.workerId] = r;
+if (!latest[r.operativeId] || r.timestamp > latest[r.operativeId].timestamp) {
+latest[r.operativeId] = r;
 }
 });
 displayRecords = Object.values(latest);
@@ -197,8 +197,8 @@ displayRecords = Object.values(latest);
 // Filter
 if (filterText) {
 displayRecords = displayRecords.filter(r =>
-String(r.workerName).toLowerCase().includes(filterText) ||
-String(r.workerRole).toLowerCase().includes(filterText)
+String(r.operativeName).toLowerCase().includes(filterText) ||
+String(r.operativeRole).toLowerCase().includes(filterText)
 );
 }
 
@@ -207,7 +207,7 @@ displayRecords.sort((a,b) => b.timestamp - a.timestamp);
 
 if (displayRecords.length === 0) {
 const msg = filterText ? 'No matches for "' + escapeHtml(filterText) + '"' :
-currentTab === 'onsite' ? 'No workers currently on site.' : 'No activity today yet.';
+currentTab === 'onsite' ? 'No operatives currently on site.' : 'No activity today yet.';
 tbody.innerHTML = `<tr><td colspan="5" class="empty">${msg}</td></tr>`;
 return;
 }
@@ -219,9 +219,9 @@ const fresh = (Date.now() - r.timestamp) < 5*60*1000;
 const rowClass = fresh ? 'recent' : '';
 return `<tr class="${rowClass}">
 <td data-label="Status">${fresh ? '<span class="fresh-indicator"></span>Fresh' : '—'}</td>
-<td data-label="Worker">
-<div class="worker-name">${escapeHtml(r.workerName || 'Unknown')}</div>
-${r.workerRole ? `<div class="worker-role">${escapeHtml(r.workerRole)}</div>` : ''}
+<td data-label="operative">
+<div class="operative-name">${escapeHtml(r.operativeName || 'Unknown')}</div>
+${r.operativeRole ? `<div class="operative-role">${escapeHtml(r.operativeRole)}</div>` : ''}
 </td>
 <td data-label="Action">
 <span class="action-badge action-${r.action}">${r.action}</span>
@@ -242,8 +242,8 @@ render();
 });
 
 statusRef.on('value', snap => {
-workerStatus = {};
-snap.forEach(child => { workerStatus[child.key] = child.val(); });
+operativeStatus = {};
+snap.forEach(child => { operativeStatus[child.key] = child.val(); });
 render();
 });
 
@@ -258,10 +258,10 @@ function exportCSV() {
 const today = todayStart();
 const todays = allRecords.filter(r => r.timestamp >= today);
 if (todays.length === 0) { alert('No records to export.'); return; }
-let csv = 'Worker Name,Role,Action,Method,Timestamp,Time\n';
+let csv = 'operative Name,Role,Action,Method,Timestamp,Time\n';
 todays.forEach(r => {
 const t = new Date(r.timestamp).toISOString();
-csv += `"${r.workerName}","${r.workerRole}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
+csv += `"${r.operativeName}","${r.operativeRole}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
 });
 const blob = new Blob([csv], { type: 'text/csv' });
 const url = URL.createObjectURL(blob);
