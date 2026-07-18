@@ -194,10 +194,9 @@ const todays = allRecords.filter(r => r.timestamp >= today);
 
 // Stats
 const onSiteNow = Object.values(operativeStatus).filter(s => s.onSite).length;
+const totalSignIns = todays.filter(r => r.action === 'IN').length;
 document.getElementById('stat-onsite').textContent = onSiteNow;
-document.getElementById('stat-total').textContent = todays.length;
-document.getElementById('stat-recent').textContent = todays.filter(r => Date.now() - r.timestamp < 15*60*1000).length;
-document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.operativeId)).size;
+document.getElementById('stat-total').textContent = totalSignIns;
 
 // Company breakdown
 const companyCount = {};
