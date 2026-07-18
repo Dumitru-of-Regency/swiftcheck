@@ -11,12 +11,12 @@
 body { margin:0; padding:0; background:#020617; color:#f1f5f9;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
 .container { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
-header { display:flex; justify-content:space-between; align-items:center;
-padding:0 0 20px; border-bottom:1px solid #1e293b; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-header h1 { margin:0; font-size:22px; letter-spacing:1px; }
-header h1 span { color:#10b981; }
+header { padding:16px 0 24px; border-bottom:1px solid #1e293b; margin-bottom:24px; text-align: center; }
+.logo-text { font-size: 28px; font-weight: 800; letter-spacing: 1px; line-height: 1.2; }
+.logo-regency { color: #F58C1F; }
+.logo-facades { color: #8E8E8E; display: block; font-size: 24px; }
 .live-badge { display:inline-flex; align-items:center; gap:8px; background:#064e3b;
-color:#6ee7b7; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:1px; }
+color:#6ee7b7; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:1px; margin-top: 15px;}
 .live-dot { width:8px; height:8px; background:#10b981; border-radius:50%; animation:blink 1.5s infinite; }
 @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
@@ -28,6 +28,14 @@ color:#6ee7b7; padding:6px 14px; border-radius:20px; font-size:12px; font-weight
 .stat.blue .num { color:#38bdf8; }
 .stat.amber .num { color:#f59e0b; }
 .stat.purple .num { color:#a78bfa; }
+
+.company-stats { background:#1e293b; padding:20px; border-radius:14px; margin-bottom:24px; border:1px solid #293548; }
+.company-stats h2 { margin:0 0 16px; font-size:16px; color:#f1f5f9; }
+.company-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+.company-item { background:#0f172a; padding:16px; border-radius:10px; border-left: 4px solid #f59e0b; }
+.company-item .name { font-size:14px; font-weight:700; color:#f1f5f9; margin-bottom:8px; }
+.company-item .count { font-size:32px; font-weight:800; color:#f59e0b; }
+.company-item .label { font-size:11px; color:#94a3b8; }
 
 .tabs { display:flex; gap:8px; margin-bottom:16px; }
 .tab { padding:10px 20px; background:#1e293b; border:1px solid #293548; border-radius:10px;
@@ -55,16 +63,18 @@ tbody tr:hover { background:#293548; }
 tbody tr.recent { background:rgba(16,185,129,0.08); }
 .operative-name { font-weight:700; color:#f1f5f9; }
 .operative-role { font-size:11px; color:#94a3b8; margin-top:2px; }
+.operative-company { font-size:11px; color:#f59e0b; margin-top:2px; font-weight: 600; }
 .action-badge { display:inline-block; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:700; letter-spacing:0.5px; }
 .action-IN { background:#064e3b; color:#6ee7b7; }
 .action-OUT { background:#78350f; color:#fcd34d; }
 .method-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; letter-spacing:0.5px; margin-left:6px; }
 .method-NFC { background:#164e63; color:#67e8f9; }
 .method-QR { background:#14532d; color:#86efac; }
+.method-Manual { background:#312e81; color:#c7d2fe; }
 .time-cell { color:#94a3b8; font-family:"SF Mono",Menlo,monospace; font-size:13px; }
 .fresh-indicator { display:inline-block; width:8px; height:8px; background:#10b981; border-radius:50%; margin-right:8px; animation:blink 1.5s infinite; }
 .empty { padding:40px; text-align:center; color:#64748b; }
-.footer { text-align:center; font-size:11px; color:#475569; margin-top:24px; }
+.footer { text-align:center; font-size:11px; color:#475569; margin-top:24px; padding: 10px 0; border-top: 1px solid #1e293b; }
 
 @media (max-width:600px) {
 thead { display:none; }
@@ -77,29 +87,25 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 <body>
 <div class="container">
 <header>
-<div style="display: flex; align-items: center; gap: 10px;">
-<!-- CSS Logo Icon -->
-<div style="display: flex; align-items: center; justify-content: center; width: 50px; height: 50px;">
-<div style="position: relative; width: 35px; height: 35px;">
-<!-- Grey curved shape -->
-<div style="position: absolute; width: 25px; height: 35px; border: 6px solid #8E8E8E; border-radius: 20px 20px 0 0; border-bottom: none; left: 0;"></div>
-<!-- Orange dot -->
-<div style="position: absolute; width: 10px; height: 10px; background: #F58C1F; border-radius: 50%; top: 8px; left: 18px;"></div>
+<div class="logo-text">
+<span class="logo-regency">REGENCY</span>
+<span class="logo-facades">FACADES</span>
 </div>
-</div>
-<!-- Company Name -->
-<div style="display: flex; flex-direction: column; line-height: 1.1;">
-<span style="font-size: 20px; font-weight: 800; color: #F58C1F; letter-spacing: 1px;">REGENCY</span>
-<span style="font-size: 16px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
-</div>
-</div>
+<div class="live-badge"><span class="live-dot"></span>LIVE · <span id="last-update">connecting...</span></div>
 </header>
 
 <div class="stats">
 <div class="stat green"><div class="num" id="stat-onsite">—</div><div class="lbl">Currently On Site</div></div>
 <div class="stat blue"><div class="num" id="stat-total">—</div><div class="lbl">Total Sign-Ins Today</div></div>
 <div class="stat amber"><div class="num" id="stat-recent">—</div><div class="lbl">Last 15 Minutes</div></div>
-<div class="stat purple"><div class="num" id="stat-unique">—</div><div class="lbl">Unique operatives</div></div>
+<div class="stat purple"><div class="num" id="stat-unique">—</div><div class="lbl">Unique Operatives</div></div>
+</div>
+
+<div class="company-stats">
+<h2>📊 Operatives by Company</h2>
+<div class="company-grid" id="company-grid">
+<div class="empty">Loading...</div>
+</div>
 </div>
 
 <div class="tabs">
@@ -108,7 +114,7 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 </div>
 
 <div class="controls">
-<input type="text" id="search" placeholder="🔍 Filter by name or role...">
+<input type="text" id="search" placeholder=" Filter by name, role, or company...">
 <button type="button" class="btn-refresh" onclick="location.reload()">↻ Refresh</button>
 <button type="button" class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
 <button type="button" class="btn-clear" onclick="clearToday()">🗑 Clear Today</button>
@@ -119,7 +125,7 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 <thead>
 <tr>
 <th>Status</th>
-<th>operative</th>
+<th>Operative</th>
 <th>Action</th>
 <th>Time</th>
 <th>Elapsed</th>
@@ -129,30 +135,35 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 </table>
 </div>
 
-<div class="footer">SwiftCheck Office Dashboard · Auto-updates in real time</div>
+<div class="footer">Regency Facades © 2026</div>
 </div>
 
 <script>
+// ========== SITE CONFIGURATION ==========
+const SITE_ID = "I"; // Change to "II", "III", etc. for other sites
+// =========================================
+
 const firebaseConfig = {
-apiKey: const firebaseConfig = {
-  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
-  authDomain: "swiftcheck-ed24e.firebaseapp.com",
-  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "swiftcheck-ed24e",
-  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
-  messagingSenderId: "918610814261",
-  appId: "1:918610814261:web:175b912556afc0d82e587c"
+apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEyg0pyIyKbz-g2E",
+authDomain: "swiftcheck-ed24e.firebaseapp.com",
+databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "swiftcheck-ed24e",
+storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+messagingSenderId: "918610814261",
+appId: "1:918610814261:web:175b912556afc0d82e587c"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const signinsRef = db.ref('signins');
-const statusRef = db.ref('status');
+const signinsRef = db.ref('sites/' + SITE_ID + '/signins');
+const statusRef = db.ref('sites/' + SITE_ID + '/status');
+const operativesRef = db.ref('sites/' + SITE_ID + '/operatives');
 
 const tbody = document.getElementById('tbody');
 const searchInput = document.getElementById('search');
 let allRecords = [];
 let operativeStatus = {};
+let operativesData = {};
 let filterText = '';
 let currentTab = 'activity';
 
@@ -188,17 +199,39 @@ document.getElementById('stat-total').textContent = todays.length;
 document.getElementById('stat-recent').textContent = todays.filter(r => Date.now() - r.timestamp < 15*60*1000).length;
 document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.operativeId)).size;
 
+// Company breakdown
+const companyCount = {};
+Object.values(operativeStatus).forEach(status => {
+if (status.onSite) {
+const company = status.company || 'Unknown Company';
+companyCount[company] = (companyCount[company] || 0) + 1;
+}
+});
+
+const companyGrid = document.getElementById('company-grid');
+const companies = Object.entries(companyCount).sort((a,b) => b[1] - a[1]);
+
+if (companies.length === 0) {
+companyGrid.innerHTML = '<div class="empty">No operatives currently on site</div>';
+} else {
+companyGrid.innerHTML = companies.map(([company, count]) => `
+<div class="company-item">
+<div class="name">${escapeHtml(company)}</div>
+<div class="count">${count}</div>
+<div class="label">operatives on site</div>
+</div>
+`).join('');
+}
+
 let displayRecords = [];
 
 if (currentTab === 'activity') {
 displayRecords = todays;
 } else if (currentTab === 'onsite') {
-// Show only operatives currently on site
 displayRecords = todays.filter(r => {
 const status = operativeStatus[r.operativeId];
 return status && status.onSite;
 });
-// Deduplicate — show only latest action per operative
 const latest = {};
 displayRecords.forEach(r => {
 if (!latest[r.operativeId] || r.timestamp > latest[r.operativeId].timestamp) {
@@ -208,15 +241,14 @@ latest[r.operativeId] = r;
 displayRecords = Object.values(latest);
 }
 
-// Filter
 if (filterText) {
 displayRecords = displayRecords.filter(r =>
 String(r.operativeName).toLowerCase().includes(filterText) ||
-String(r.operativeRole).toLowerCase().includes(filterText)
+String(r.operativeRole).toLowerCase().includes(filterText) ||
+String(r.operativeCompany).toLowerCase().includes(filterText)
 );
 }
 
-// Sort most recent first
 displayRecords.sort((a,b) => b.timestamp - a.timestamp);
 
 if (displayRecords.length === 0) {
@@ -233,9 +265,10 @@ const fresh = (Date.now() - r.timestamp) < 5*60*1000;
 const rowClass = fresh ? 'recent' : '';
 return `<tr class="${rowClass}">
 <td data-label="Status">${fresh ? '<span class="fresh-indicator"></span>Fresh' : '—'}</td>
-<td data-label="operative">
+<td data-label="Operative">
 <div class="operative-name">${escapeHtml(r.operativeName || 'Unknown')}</div>
 ${r.operativeRole ? `<div class="operative-role">${escapeHtml(r.operativeRole)}</div>` : ''}
+${r.operativeCompany ? `<div class="operative-company">${escapeHtml(r.operativeCompany)}</div>` : ''}
 </td>
 <td data-label="Action">
 <span class="action-badge action-${r.action}">${r.action}</span>
@@ -247,7 +280,6 @@ ${r.operativeRole ? `<div class="operative-role">${escapeHtml(r.operativeRole)}<
 }).join('');
 }
 
-// Live listeners
 signinsRef.on('value', snap => {
 allRecords = [];
 snap.forEach(child => { allRecords.push({ id: child.key, ...child.val() }); });
@@ -272,16 +304,16 @@ function exportCSV() {
 const today = todayStart();
 const todays = allRecords.filter(r => r.timestamp >= today);
 if (todays.length === 0) { alert('No records to export.'); return; }
-let csv = 'operative Name,Role,Action,Method,Timestamp,Time\n';
+let csv = 'Operative Name,Role,Company,Action,Method,Timestamp,Time\n';
 todays.forEach(r => {
 const t = new Date(r.timestamp).toISOString();
-csv += `"${r.operativeName}","${r.operativeRole}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
+csv += `"${r.operativeName}","${r.operativeRole}","${r.operativeCompany}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
 });
 const blob = new Blob([csv], { type: 'text/csv' });
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = 'swiftcheck-' + new Date().toISOString().slice(0,10) + '.csv';
+a.download = 'swiftcheck-site' + SITE_ID + '-' + new Date().toISOString().slice(0,10) + '.csv';
 a.click();
 URL.revokeObjectURL(url);
 }
