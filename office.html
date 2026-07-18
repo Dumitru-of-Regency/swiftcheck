@@ -77,13 +77,20 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 <body>
 <div class="container">
 <header>
-<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-<div>
-<h1 style="margin: 0; font-size: 48px; letter-spacing: 1px;">
-<span style="color: #F58C1F;">REGENCY</span> <span style="color: #8E8E8E;">FACADES LTD</span>
-</h1>
+<div style="display: flex; align-items: center; gap: 10px;">
+<!-- CSS Logo Icon -->
+<div style="display: flex; align-items: center; justify-content: center; width: 50px; height: 50px;">
+<div style="position: relative; width: 35px; height: 35px;">
+<!-- Grey curved shape -->
+<div style="position: absolute; width: 25px; height: 35px; border: 6px solid #8E8E8E; border-radius: 20px 20px 0 0; border-bottom: none; left: 0;"></div>
+<!-- Orange dot -->
+<div style="position: absolute; width: 10px; height: 10px; background: #F58C1F; border-radius: 50%; top: 8px; left: 18px;"></div>
 </div>
-<div style="margin-left: auto;">
+</div>
+<!-- Company Name -->
+<div style="display: flex; flex-direction: column; line-height: 1.1;">
+<span style="font-size: 20px; font-weight: 800; color: #F58C1F; letter-spacing: 1px;">REGENCY</span>
+<span style="font-size: 16px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
 </div>
 </div>
 </header>
