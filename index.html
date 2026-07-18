@@ -13,7 +13,9 @@ html, body { margin:0; padding:0; background:#020617; color:#f1f5f9;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
 .container { max-width:520px; margin:0 auto; padding:20px 16px 40px; }
 header { text-align:center; padding:16px 0 24px; border-bottom:1px solid #1e293b; margin-bottom:20px; }
-header h1 { margin:0; font-size:22px; letter-spacing:1px; }
+.logo-text { font-size: 28px; font-weight: 800; letter-spacing: 1px; line-height: 1.2; }
+.logo-regency { color: #F58C1F; }
+.logo-facades { color: #8E8E8E; display: block; font-size: 24px; }
 header p { margin:6px 0 0; font-size:12px; color:#64748b; letter-spacing:2px; text-transform:uppercase; }
 .onsite-banner {
 background: linear-gradient(135deg,#059669,#10b981);
@@ -53,41 +55,37 @@ height:140px; overflow-y:auto; border-radius:10px; border:1px solid #1e293b; }
 #log .err { color:#f87171; }
 #log .ok { color:#4ade80; }
 .hint { font-size:12px; color:#64748b; margin:-4px 0 12px; line-height:1.4; }
-.footer { text-align:center; font-size:11px; color:#475569; margin-top:20px; }
+.footer { text-align:center; font-size:11px; color:#475569; margin-top:20px; padding: 10px 0; border-top: 1px solid #1e293b; }
 .recent-item { background:#0f172a; padding:10px 12px; border-radius:8px; margin-bottom:6px;
 display:flex; justify-content:space-between; align-items:center; font-size:13px; }
 .recent-item .info { flex:1; }
 .recent-item .name { font-weight:600; color:#f1f5f9; }
+.recent-item .company { font-size:11px; color:#94a3b8; margin-top:2px; }
 .recent-item .action { font-size:11px; margin-top:2px; }
 .recent-item .action.in { color:#10b981; }
 .recent-item .action.out { color:#f59e0b; }
 .recent-item .time { color:#64748b; font-size:11px; }
-.worker-lookup { background:#0f172a; padding:12px; border-radius:8px; margin-top:10px; }
-.worker-lookup .name { font-size:16px; font-weight:700; color:#10b981; }
-.worker-lookup .role { font-size:12px; color:#94a3b8; margin-top:2px; }
+.operative-lookup { background:#0f172a; padding:12px; border-radius:8px; margin-top:10px; }
+.operative-lookup .name { font-size:16px; font-weight:700; color:#10b981; }
+.operative-lookup .role { font-size:12px; color:#94a3b8; margin-top:2px; }
+.operative-lookup .company { font-size:12px; color:#f59e0b; margin-top:4px; font-weight: 600; }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;">
-<div style="position: relative; width: 35px; height: 35px;">
-<div style="position: absolute; width: 25px; height: 35px; border: 6px solid #8E8E8E; border-radius: 20px 20px 0 0; border-bottom: none; left: 0;"></div>
-<div style="position: absolute; width: 10px; height: 10px; background: #F58C1F; border-radius: 50%; top: 8px; left: 18px;"></div>
+<div class="logo-text">
+<span class="logo-regency">REGENCY</span>
+<span class="logo-facades">FACADES</span>
 </div>
-<div style="display: flex; flex-direction: column; line-height: 1.1;">
-<span style="font-size: 20px; font-weight: 800; color: #F58C1F; letter-spacing: 1px;">REGENCY</span>
-<span style="font-size: 14px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
-</div>
-</div>
-<h1 style="font-size: 18px; margin-top: 10px;">SITE TERMINAL</h1>
+<p style="margin-top: 15px; font-weight: 600; color: #94a3b8;">SITE TERMINAL</p>
 </header>
 
 <div id="status" class="status-idle">Ready — tap NFC card, scan QR code, or enter ID manually</div>
 
 <div class="card">
 <h2>Manual ID Entry</h2>
-<p class="hint">Type your NFC tag ID or worker ID manually.</p>
+<p class="hint">Type your NFC tag ID or operative ID manually.</p>
 <input type="text" id="manual-id" placeholder="Enter ID here..." autocomplete="off">
 <button type="button" class="btn-primary" id="btn-manual">SUBMIT SIGN-IN</button>
 </div>
@@ -99,9 +97,10 @@ display:flex; justify-content:space-between; align-items:center; font-size:13px;
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12c0-4.4 3.6-8 8-8M8 12c0-2.2 1.8-4 4-4M12 12h.01M20 12c0 4.4-3.6 8-8 8M16 12c0 2.2-1.8 4-4 4"/></svg>
 <span id="nfc-label">START NFC SCAN</span>
 </button>
-<div id="worker-lookup" class="worker-lookup" style="display:none;">
+<div id="operative-lookup" class="operative-lookup" style="display:none;">
 <div class="name" id="lookup-name"></div>
 <div class="role" id="lookup-role"></div>
+<div class="company" id="lookup-company"></div>
 </div>
 </div>
 
@@ -125,10 +124,14 @@ display:flex; justify-content:space-between; align-items:center; font-size:13px;
 <div id="log"></div>
 </div>
 
-<div class="footer">SwiftCheck · Tap to enter or leave</div>
+<div class="footer">Regency Facades © 2026</div>
 </div>
 
 <script>
+// ========== SITE CONFIGURATION ==========
+const SITE_ID = "I"; // Change to "II", "III", etc. for other sites
+// =========================================
+
 const firebaseConfig = {
 apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEyg0pyIyKbz-g2E",
 authDomain: "swiftcheck-ed24e.firebaseapp.com",
@@ -141,9 +144,9 @@ appId: "1:918610814261:web:175b912556afc0d82e587c"
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const workersRef = db.ref('workers');
-const signinsRef = db.ref('signins');
-const statusRef = db.ref('status');
+const operativesRef = db.ref('sites/' + SITE_ID + '/operatives');
+const signinsRef = db.ref('sites/' + SITE_ID + '/signins');
+const statusRef = db.ref('sites/' + SITE_ID + '/status');
 
 const statusEl = document.getElementById('status');
 const logEl = document.getElementById('log');
@@ -154,13 +157,14 @@ const nfcLabel = document.getElementById('nfc-label');
 const btnQr = document.getElementById('btn-qr');
 const qrLabel = document.getElementById('qr-label');
 const qrReaderEl = document.getElementById('qr-reader');
-const lookupEl = document.getElementById('worker-lookup');
+const lookupEl = document.getElementById('operative-lookup');
 const lookupName = document.getElementById('lookup-name');
 const lookupRole = document.getElementById('lookup-role');
+const lookupCompany = document.getElementById('lookup-company');
 
 let nfcReader = null, nfcScanning = false;
 let qrScanner = null, qrScanning = false;
-let workersCache = {};
+let operativesCache = {};
 
 function todayStart() {
 const d = new Date(); d.setHours(0,0,0,0);
@@ -185,12 +189,12 @@ function escapeHtml(s) {
 return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-workersRef.on('value', snap => {
-workersCache = {};
+operativesRef.on('value', snap => {
+operativesCache = {};
 snap.forEach(child => {
-workersCache[child.key] = child.val();
+operativesCache[child.key] = child.val();
 });
-log('Loaded ' + Object.keys(workersCache).length + ' workers');
+log('Loaded ' + Object.keys(operativesCache).length + ' operatives');
 });
 
 signinsRef.orderByChild('timestamp').on('value', snap => {
@@ -211,7 +215,8 @@ const actionClass = s.action === 'IN' ? 'in' : 'out';
 const actionText = s.action === 'IN' ? 'SIGNED IN' : 'SIGNED OUT';
 return `<div class="recent-item">
 <div class="info">
-<div class="name">${escapeHtml(s.workerName || 'Unknown')}</div>
+<div class="name">${escapeHtml(s.operativeName || 'Unknown')}</div>
+${s.operativeCompany ? `<div class="company">${escapeHtml(s.operativeCompany)}</div>` : ''}
 <div class="action ${actionClass}">${actionText} · ${s.method}</div>
 </div>
 <div class="time">${t}</div>
@@ -227,43 +232,45 @@ return;
 }
 tagId = tagId.trim();
 
-let worker = null;
-let workerId = null;
+let operative = null;
+let operativeId = null;
 
-for (const [id, data] of Object.entries(workersCache)) {
+for (const [id, data] of Object.entries(operativesCache)) {
 if (data.nfcTag === tagId || data.qrCode === tagId || id === tagId) {
-worker = data;
-workerId = id;
+operative = data;
+operativeId = id;
 break;
 }
 }
 
-if (!worker) {
+if (!operative) {
 setStatus('❌ Unknown ID: ' + tagId, 'error');
 log('ID not found in database: ' + tagId, 'err');
 lookupEl.style.display = 'none';
 return;
 }
 
-lookupName.textContent = worker.name || workerId;
-lookupRole.textContent = worker.role || '';
+lookupName.textContent = operative.name || operativeId;
+lookupRole.textContent = operative.role || '';
+lookupCompany.textContent = operative.company || '';
 lookupEl.style.display = 'block';
 
-const workerStatus = await statusRef.child(workerId).once('value');
-const currentStatus = workerStatus.val();
+const operativeStatus = await statusRef.child(operativeId).once('value');
+const currentStatus = operativeStatus.val();
 const isOnSite = currentStatus && currentStatus.onSite;
 
 const action = isOnSite ? 'OUT' : 'IN';
 const actionText = action === 'IN' ? 'SIGNED IN' : 'SIGNED OUT';
 
-setStatus(' Recording ' + actionText + '...', 'loading');
-log((worker.name || workerId) + ' → ' + actionText);
+setStatus('⏳ Recording ' + actionText + '...', 'loading');
+log((operative.name || operativeId) + ' → ' + actionText);
 
 try {
 const record = {
-workerId: workerId,
-workerName: worker.name || workerId,
-workerRole: worker.role || '',
+operativeId: operativeId,
+operativeName: operative.name || operativeId,
+operativeRole: operative.role || '',
+operativeCompany: operative.company || '',
 action: action,
 method: method,
 timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -271,13 +278,14 @@ date: new Date().toISOString().slice(0,10)
 };
 await signinsRef.push(record);
 
-await statusRef.child(workerId).set({
+await statusRef.child(operativeId).set({
 onSite: action === 'IN',
 lastAction: action,
-lastTimestamp: firebase.database.ServerValue.TIMESTAMP
+lastTimestamp: firebase.database.ServerValue.TIMESTAMP,
+company: operative.company || ''
 });
 
-setStatus('✅ ' + (worker.name || workerId) + ' — ' + actionText, 'success');
+setStatus('✅ ' + (operative.name || operativeId) + ' — ' + actionText, 'success');
 log('Saved ✓', 'ok');
 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
@@ -295,7 +303,7 @@ log('Firebase error: ' + err.message, 'err');
 btnManual.addEventListener('click', function() {
 const id = manualIn.value;
 if (!id) {
-setStatus('️ Please enter an ID first', 'error');
+setStatus('⚠️ Please enter an ID first', 'error');
 manualIn.focus();
 return;
 }
@@ -313,7 +321,7 @@ btnManual.click();
 // NFC
 function startNfc() {
 if (!('NDEFReader' in window)) {
-setStatus('❌ NFC not supported on this device', 'error');
+setStatus(' NFC not supported on this device', 'error');
 log('Web NFC requires Android Chrome', 'err');
 return;
 }
@@ -380,7 +388,7 @@ stopQr();
 qrScanning = true;
 btnQr.classList.add('scanning');
 qrLabel.textContent = 'STOP CAMERA';
-setStatus(' Scanning QR — point at code', 'scanning');
+setStatus('📷 Scanning QR — point at code', 'scanning');
 }).catch(err => {
 log('Camera error: ' + err.message, 'err');
 setStatus('❌ Camera error: ' + err.message, 'error');
@@ -402,7 +410,7 @@ setStatus('Ready — tap NFC card, scan QR code, or enter ID manually', 'idle');
 
 btnQr.addEventListener('click', () => qrScanning ? stopQr() : startQr());
 
-log('SwiftCheck started');
+log('SwiftCheck started - Site ' + SITE_ID);
 </script>
 </body>
 </html>
