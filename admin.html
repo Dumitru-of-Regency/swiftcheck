@@ -11,9 +11,10 @@
 body { margin:0; padding:0; background:#020617; color:#f1f5f9;
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
 .container { max-width:900px; margin:0 auto; padding:24px 20px 60px; }
-header { padding:0 0 20px; border-bottom:1px solid #1e293b; margin-bottom:24px; }
-header h1 { margin:0; font-size:22px; letter-spacing:1px; }
-header h1 span { color:#f59e0b; }
+header { padding:16px 0 24px; border-bottom:1px solid #1e293b; margin-bottom:24px; text-align: center; }
+.logo-text { font-size: 28px; font-weight: 800; letter-spacing: 1px; line-height: 1.2; }
+.logo-regency { color: #F58C1F; }
+.logo-facades { color: #8E8E8E; display: block; font-size: 24px; }
 .card { background:#1e293b; padding:20px; border-radius:14px; margin-bottom:20px; border:1px solid #293548; }
 .card h2 { margin:0 0 16px; font-size:16px; color:#f1f5f9; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
@@ -37,6 +38,7 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 .operative-info { flex:1; min-width:200px; }
 .operative-name { font-size:16px; font-weight:700; color:#f1f5f9; }
 .operative-details { font-size:12px; color:#94a3b8; margin-top:4px; }
+.operative-company { color:#f59e0b; font-weight: 600; }
 .operative-actions { display:flex; gap:8px; }
 .empty { padding:40px; text-align:center; color:#64748b; }
 .status-msg { padding:12px; border-radius:8px; margin-bottom:16px; text-align:center; font-weight:600; }
@@ -45,28 +47,42 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 @media (max-width:600px) {
 .form-grid { grid-template-columns:1fr; }
 }
+.footer { text-align:center; font-size:11px; color:#475569; margin-top:24px; padding: 10px 0; border-top: 1px solid #1e293b; }
+.site-badge { display:inline-block; background:#4f46e5; color:#fff; padding:4px 12px; border-radius:12px; font-size:12px; font-weight:600; margin-top:10px; }
 </style>
 </head>
 <body>
 <div class="container">
 <header>
-<h1>⚡ SWIFTCHECK <span>· Admin</span></h1>
+<div class="logo-text">
+<span class="logo-regency">REGENCY</span>
+<span class="logo-facades">FACADES</span>
+</div>
+<div class="site-badge">Site ID: <span id="site-id-display">I</span></div>
 </header>
 
 <div id="status-msg"></div>
 
 <div class="card">
-<h2 id="form-title">Add New operative</h2>
+<h2 id="form-title">Add New Operative</h2>
 <form id="operative-form">
 <input type="hidden" id="operative-id">
 <div class="form-grid">
 <div class="form-group">
-<label>operative Name *</label>
+<label>Operative Name *</label>
 <input type="text" id="name" required placeholder="John Smith">
+</div>
+<div class="form-group">
+<label>Company / Employer *</label>
+<input type="text" id="company" required placeholder="ABC Construction Ltd">
 </div>
 <div class="form-group">
 <label>Role / Job Title</label>
 <input type="text" id="role" placeholder="Electrician">
+</div>
+<div class="form-group">
+<label>Safety Qualification</label>
+<input type="text" id="safety" placeholder="CSCS Card, SSSTS, etc.">
 </div>
 <div class="form-group">
 <label>NFC Tag ID *</label>
@@ -87,34 +103,42 @@ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
 </div>
 </div>
 <div class="btn-group">
-<button type="submit" class="btn-primary">💾 Save operative</button>
+<button type="submit" class="btn-primary">💾 Save Operative</button>
 <button type="button" class="btn-secondary" onclick="resetForm()">Cancel</button>
 </div>
 </form>
 </div>
 
 <div class="card">
-<h2>Registered operatives (<span id="operative-count">0</span>)</h2>
+<h2>Registered Operatives (<span id="operative-count">0</span>)</h2>
 <div id="operative-list" class="operative-list">
 <div class="empty">Loading operatives...</div>
 </div>
 </div>
+
+<div class="footer">Regency Facades © 2026</div>
 </div>
 
 <script>
+// ========== SITE CONFIGURATION ==========
+const SITE_ID = "I"; // Change to "II", "III", etc. for other sites
+// =========================================
+
+document.getElementById('site-id-display').textContent = SITE_ID;
+
 const firebaseConfig = {
-  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
-  authDomain: "swiftcheck-ed24e.firebaseapp.com",
-  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "swiftcheck-ed24e",
-  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
-  messagingSenderId: "918610814261",
-  appId: "1:918610814261:web:175b912556afc0d82e587c"
+apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEyg0pyIyKbz-g2E",
+authDomain: "swiftcheck-ed24e.firebaseapp.com",
+databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "swiftcheck-ed24e",
+storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+messagingSenderId: "918610814261",
+appId: "1:918610814261:web:175b912556afc0d82e587c"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const operativesRef = db.ref('operatives');
+const operativesRef = db.ref('sites/' + SITE_ID + '/operatives');
 
 const form = document.getElementById('operative-form');
 const operativeList = document.getElementById('operative-list');
@@ -130,7 +154,7 @@ setTimeout(() => { statusMsg.textContent = ''; statusMsg.className = ''; }, 3000
 function resetForm() {
 form.reset();
 document.getElementById('operative-id').value = '';
-document.getElementById('form-title').textContent = 'Add New operative';
+document.getElementById('form-title').textContent = 'Add New Operative';
 }
 
 async function readNfcTag() {
@@ -168,7 +192,9 @@ e.preventDefault();
 const id = document.getElementById('operative-id').value;
 const operative = {
 name: document.getElementById('name').value.trim(),
+company: document.getElementById('company').value.trim(),
 role: document.getElementById('role').value.trim(),
+safetyQual: document.getElementById('safety').value.trim(),
 nfcTag: document.getElementById('nfc-tag').value.trim(),
 qrCode: document.getElementById('qr-code').value.trim(),
 phone: document.getElementById('phone').value.trim(),
@@ -181,10 +207,10 @@ updatedAt: firebase.database.ServerValue.TIMESTAMP
 try {
 if (id) {
 await operativesRef.child(id).update(operative);
-showStatus('operative updated ✓', 'success');
+showStatus('Operative updated ✓', 'success');
 } else {
 await operativesRef.push(operative);
-showStatus('operative added ✓', 'success');
+showStatus('Operative added ✓', 'success');
 }
 resetForm();
 } catch (err) {
@@ -192,31 +218,33 @@ showStatus('Error: ' + err.message, 'error');
 }
 });
 
-function editoperative(id) {
-const w = operatives[id];
+function editOperative(id) {
+const o = operatives[id];
 document.getElementById('operative-id').value = id;
-document.getElementById('name').value = w.name || '';
-document.getElementById('role').value = w.role || '';
-document.getElementById('nfc-tag').value = w.nfcTag || '';
-document.getElementById('qr-code').value = w.qrCode || '';
-document.getElementById('phone').value = w.phone || '';
-document.getElementById('notes').value = w.notes || '';
-document.getElementById('form-title').textContent = 'Edit operative';
+document.getElementById('name').value = o.name || '';
+document.getElementById('company').value = o.company || '';
+document.getElementById('role').value = o.role || '';
+document.getElementById('safety').value = o.safetyQual || '';
+document.getElementById('nfc-tag').value = o.nfcTag || '';
+document.getElementById('qr-code').value = o.qrCode || '';
+document.getElementById('phone').value = o.phone || '';
+document.getElementById('notes').value = o.notes || '';
+document.getElementById('form-title').textContent = 'Edit Operative';
 window.scrollTo(0, 0);
 }
 
-async function deleteoperative(id) {
+async function deleteOperative(id) {
 if (!confirm('Delete this operative? This cannot be undone.')) return;
 try {
 await operativesRef.child(id).remove();
-showStatus('operative deleted ✓', 'success');
+showStatus('Operative deleted ✓', 'success');
 } catch (err) {
 showStatus('Error: ' + err.message, 'error');
 }
 }
 
-function renderoperatives() {
-const list = Object.entries(operatives).map(([id, w]) => ({ id, ...w }));
+function renderOperatives() {
+const list = Object.entries(operatives).map(([id, o]) => ({ id, ...o }));
 document.getElementById('operative-count').textContent = list.length;
 
 if (list.length === 0) {
@@ -226,19 +254,21 @@ return;
 
 list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-operativeList.innerHTML = list.map(w => `
+operativeList.innerHTML = list.map(o => `
 <div class="operative-item">
 <div class="operative-info">
-<div class="operative-name">${w.name || 'Unnamed'}</div>
+<div class="operative-name">${o.name || 'Unnamed'}</div>
 <div class="operative-details">
-${w.role ? `<strong>${w.role}</strong> · ` : ''}
-NFC: <code>${w.nfcTag || '—'}</code>
-${w.phone ? ` · 📞 ${w.phone}` : ''}
+${o.company ? `<span class="operative-company">${o.company}</span> · ` : ''}
+${o.role || 'No role'}
+${o.safetyQual ? ` · 🛡️ ${o.safetyQual}` : ''}
+<br/>NFC: <code>${o.nfcTag || '—'}</code>
+${o.phone ? ` · 📞 ${o.phone}` : ''}
 </div>
 </div>
 <div class="operative-actions">
-<button class="btn-primary btn-small" onclick="editoperative('${w.id}')">✏️ Edit</button>
-<button class="btn-danger btn-small" onclick="deleteoperative('${w.id}')">🗑 Delete</button>
+<button class="btn-primary btn-small" onclick="editOperative('${o.id}')">️ Edit</button>
+<button class="btn-danger btn-small" onclick="deleteOperative('${o.id}')">🗑 Delete</button>
 </div>
 </div>
 `).join('');
@@ -247,7 +277,7 @@ ${w.phone ? ` · 📞 ${w.phone}` : ''}
 operativesRef.on('value', snap => {
 operatives = {};
 snap.forEach(child => { operatives[child.key] = child.val(); });
-renderoperatives();
+renderOperatives();
 });
 </script>
 </body>
