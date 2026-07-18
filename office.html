@@ -43,7 +43,7 @@ cursor:pointer; font-weight:600; font-size:13px; color:#94a3b8; transition:all 0
 .tab:hover { background:#293548; }
 .tab.active { background:#4f46e5; color:#fff; border-color:#4f46e5; }
 
-.controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items: center; }
 .controls input { flex:1; min-width:200px; padding:12px 16px; border-radius:10px;
 border:1px solid #334155; background:#0f172a; color:#fff; font-size:14px; outline:none; }
 .controls input:focus { border-color:#4f46e5; }
@@ -52,6 +52,35 @@ cursor:pointer; color:#fff; font-size:13px; font-family:inherit; }
 .btn-export { background:#0891b2; }
 .btn-clear { background:#dc2626; }
 .btn-refresh { background:#4f46e5; }
+
+.date-range-controls {
+display: flex;
+gap: 10px;
+margin-bottom: 16px;
+padding: 16px;
+background: #1e293b;
+border-radius: 10px;
+align-items: center;
+flex-wrap: wrap;
+}
+.date-range-controls label {
+color: #94a3b8;
+font-size: 13px;
+font-weight: 600;
+}
+.date-range-controls input[type="date"] {
+padding: 10px 14px;
+border-radius: 8px;
+border: 1px solid #334155;
+background: #0f172a;
+color: #fff;
+font-size: 14px;
+outline: none;
+font-family: inherit;
+}
+.date-range-controls input[type="date"]:focus {
+border-color: #4f46e5;
+}
 
 .table-wrap { background:#1e293b; border-radius:14px; border:1px solid #293548; overflow:hidden; }
 table { width:100%; border-collapse:collapse; }
@@ -81,6 +110,9 @@ thead { display:none; }
 tbody tr { display:block; padding:12px 16px; border-bottom:1px solid #0f172a; }
 tbody td { display:flex; justify-content:space-between; padding:4px 0; border:none; }
 tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+.date-range-controls { flex-direction: column; align-items: stretch; }
+.controls { flex-direction: column; }
+.controls input, .controls button { width: 100%; }
 }
 </style>
 </head>
@@ -114,10 +146,19 @@ tbody td::before { content:attr(data-label); color:#64748b; font-size:11px; text
 </div>
 
 <div class="controls">
-<input type="text" id="search" placeholder=" Filter by name, role, or company...">
+<input type="text" id="search" placeholder="🔍 Filter by name, role, or company...">
 <button type="button" class="btn-refresh" onclick="location.reload()">↻ Refresh</button>
-<button type="button" class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-<button type="button" class="btn-clear" onclick="clearToday()">🗑 Clear Today</button>
+<button type="button" class="btn-export" onclick="showExportDialog()">⬇ Export CSV</button>
+<button type="button" class="btn-clear" onclick="clearToday()"> Clear Today</button>
+</div>
+
+<div class="date-range-controls" id="dateRangeControls" style="display: none;">
+<label for="startDate">From:</label>
+<input type="date" id="startDate">
+<label for="endDate">To:</label>
+<input type="date" id="endDate">
+<button type="button" class="btn-primary" onclick="exportCSVWithDateRange()" style="padding: 10px 20px;">📥 Download CSV</button>
+<button type="button" class="btn-secondary" onclick="hideExportDialog()" style="padding: 10px 20px; background: #64748b;">Cancel</button>
 </div>
 
 <div class="table-wrap">
@@ -197,6 +238,8 @@ const onSiteNow = Object.values(operativeStatus).filter(s => s.onSite).length;
 const totalSignIns = todays.filter(r => r.action === 'IN').length;
 document.getElementById('stat-onsite').textContent = onSiteNow;
 document.getElementById('stat-total').textContent = totalSignIns;
+document.getElementById('stat-recent').textContent = todays.filter(r => Date.now() - r.timestamp < 15*60*1000).length;
+document.getElementById('stat-unique').textContent = new Set(todays.map(r => r.operativeId)).size;
 
 // Company breakdown
 const companyCount = {};
@@ -299,22 +342,65 @@ filterText = e.target.value.trim().toLowerCase();
 render();
 });
 
-function exportCSV() {
-const today = todayStart();
-const todays = allRecords.filter(r => r.timestamp >= today);
-if (todays.length === 0) { alert('No records to export.'); return; }
-let csv = 'Operative Name,Role,Company,Action,Method,Timestamp,Time\n';
-todays.forEach(r => {
-const t = new Date(r.timestamp).toISOString();
-csv += `"${r.operativeName}","${r.operativeRole}","${r.operativeCompany}","${r.action}","${r.method}","${t}","${new Date(r.timestamp).toLocaleString()}"\n`;
+function showExportDialog() {
+document.getElementById('dateRangeControls').style.display = 'flex';
+// Set default dates (today)
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('startDate').value = today;
+document.getElementById('endDate').value = today;
+}
+
+function hideExportDialog() {
+document.getElementById('dateRangeControls').style.display = 'none';
+}
+
+function exportCSVWithDateRange() {
+const startDateInput = document.getElementById('startDate').value;
+const endDateInput = document.getElementById('endDate').value;
+
+if (!startDateInput || !endDateInput) {
+alert('Please select both start and end dates.');
+return;
+}
+
+const startDate = new Date(startDateInput);
+startDate.setHours(0, 0, 0, 0);
+
+const endDate = new Date(endDateInput);
+endDate.setHours(23, 59, 59, 999);
+
+const filteredRecords = allRecords.filter(r => {
+const recordDate = new Date(r.timestamp);
+return recordDate >= startDate && recordDate <= endDate;
 });
+
+if (filteredRecords.length === 0) {
+alert('No records found for the selected date range.');
+return;
+}
+
+// Sort by timestamp
+filteredRecords.sort((a, b) => a.timestamp - b.timestamp);
+
+let csv = 'Date,Time,Operative Name,Role,Company,Action,Method\n';
+filteredRecords.forEach(r => {
+const date = new Date(r.timestamp).toISOString().split('T')[0];
+const time = new Date(r.timestamp).toLocaleTimeString();
+csv += `"${date}","${time}","${r.operativeName}","${r.operativeRole}","${r.operativeCompany}","${r.action}","${r.method}"\n`;
+});
+
 const blob = new Blob([csv], { type: 'text/csv' });
 const url = URL.createObjectURL(blob);
 const a = document.createElement('a');
 a.href = url;
-a.download = 'swiftcheck-site' + SITE_ID + '-' + new Date().toISOString().slice(0,10) + '.csv';
+
+const fileName = `swiftcheck-site${SITE_ID}-${startDateInput}-to-${endDateInput}.csv`;
+a.download = fileName;
 a.click();
 URL.revokeObjectURL(url);
+
+hideExportDialog();
+alert(`Exported ${filteredRecords.length} records from ${startDateInput} to ${endDateInput}`);
 }
 
 async function clearToday() {
