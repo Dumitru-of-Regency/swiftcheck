@@ -70,38 +70,31 @@ display:flex; justify-content:space-between; align-items:center; font-size:13px;
 <body>
 <div class="container">
 <header>
-<div style="display: flex; align-items: center; gap: 10px;">
-<!-- CSS Logo Icon -->
-<div style="display: flex; align-items: center; justify-content: center; width: 50px; height: 50px;">
+<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;">
 <div style="position: relative; width: 35px; height: 35px;">
-<!-- Grey curved shape -->
 <div style="position: absolute; width: 25px; height: 35px; border: 6px solid #8E8E8E; border-radius: 20px 20px 0 0; border-bottom: none; left: 0;"></div>
-<!-- Orange dot -->
 <div style="position: absolute; width: 10px; height: 10px; background: #F58C1F; border-radius: 50%; top: 8px; left: 18px;"></div>
 </div>
-</div>
-<!-- Company Name -->
 <div style="display: flex; flex-direction: column; line-height: 1.1;">
 <span style="font-size: 20px; font-weight: 800; color: #F58C1F; letter-spacing: 1px;">REGENCY</span>
-<span style="font-size: 16px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
+<span style="font-size: 14px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
 </div>
 </div>
+<h1 style="font-size: 18px; margin-top: 10px;">SITE TERMINAL</h1>
 </header>
+
+<div id="status" class="status-idle">Ready — tap NFC card, scan QR code, or enter ID manually</div>
 
 <div class="card">
 <h2>Manual ID Entry</h2>
 <p class="hint">Type your NFC tag ID or worker ID manually.</p>
 <input type="text" id="manual-id" placeholder="Enter ID here..." autocomplete="off">
-<button type="button" class="btn-primary" id="btn-manual" style="margin-top: 10px;">
-SUBMIT SIGN-IN
-</button>
+<button type="button" class="btn-primary" id="btn-manual">SUBMIT SIGN-IN</button>
 </div>
 
-<div id="status" class="status-idle" id="status-text">Ready — tap NFC card or scan QR code</div>
-
 <div class="card">
-<h2 id="nfc-title">NFC Card Scan</h2>
-<p class="hint" id="nfc-hint">Hold your card against the back of the phone to sign in or out.</p>
+<h2>NFC Card Scan</h2>
+<p class="hint">Hold your card against the back of the phone to sign in or out.</p>
 <button type="button" class="btn-nfc" id="btn-nfc">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12c0-4.4 3.6-8 8-8M8 12c0-2.2 1.8-4 4-4M12 12h.01M20 12c0 4.4-3.6 8-8 8M16 12c0 2.2-1.8 4-4 4"/></svg>
 <span id="nfc-label">START NFC SCAN</span>
@@ -113,8 +106,8 @@ SUBMIT SIGN-IN
 </div>
 
 <div class="card">
-<h2 id="qr-title">QR Code Scan</h2>
-<p class="hint" id="qr-hint">Point the camera at your QR code.</p>
+<h2>QR Code Scan</h2>
+<p class="hint">Point the camera at your QR code.</p>
 <div id="qr-reader" style="display:none;"></div>
 <button type="button" class="btn-qr" id="btn-qr">
 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v1"/></svg>
@@ -136,64 +129,15 @@ SUBMIT SIGN-IN
 </div>
 
 <script>
-  // Manual entry button functionality
-const btnManual = document.getElementById('btn-manual');
-const manualIdInput = document.getElementById('manual-id');
-
-if (btnManual && manualIdInput) {
-btnManual.addEventListener('click', function() {
-const id = manualIdInput.value.trim();
-if (!id) {
-setStatus('⚠️ Please enter an ID first', 'error');
-return;
-}
-processScan(id, 'Manual');
-manualIdInput.value = '';
-});
-
-// Allow pressing Enter key
-manualIdInput.addEventListener('keypress', function(e) {
-if (e.key === 'Enter') {
-btnManual.click();
-}
-});
-}
-/* ============================================================
-🔧 CONFIGURATION — CUSTOMIZE WORDING HERE
-============================================================ */
-const CONFIG = {
-siteTitle: "Site Terminal", // Header subtitle
-nfcTitle: "NFC Card Scan", // NFC section title
-nfcHint: "Hold your card against the back of the phone to sign in or out.",
-qrTitle: "QR Code Scan", // QR section title
-qrHint: "Point the camera at your QR code.",
-statusReady: "Ready — tap NFC card or scan QR code",
-actionIn: "IN SITE OFFICE", // What it says when signing in
-actionOut: "LEFT SITE", // What it says when signing out
-unknownWorker: "Unknown Worker" // If NFC tag not found in database
-};
-
-/* ============================================================
-🔧 PASTE YOUR FIREBASE CONFIG HERE
-============================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEygOpyIyKbZ-g2E",
-  authDomain: "swiftcheck-ed24e.firebaseapp.com",
-  databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "swiftcheck-ed24e",
-  storageBucket: "swiftcheck-ed24e.firebasestorage.app",
-  messagingSenderId: "918610814261",
-  appId: "1:918610814261:web:175b912556afc0d82e587c"
-};/* ============================================================ */
-
-// Apply config to page
-document.getElementById('site-title').textContent = CONFIG.siteTitle;
-document.getElementById('onsite-label').textContent = CONFIG.onsiteLabel;
-document.getElementById('nfc-title').textContent = CONFIG.nfcTitle;
-document.getElementById('nfc-hint').textContent = CONFIG.nfcHint;
-document.getElementById('qr-title').textContent = CONFIG.qrTitle;
-document.getElementById('qr-hint').textContent = CONFIG.qrHint;
-document.getElementById('status').textContent = CONFIG.statusReady;
+apiKey: "AIzaSyAmjVu2bWDLIGZlyN4tEyg0pyIyKbz-g2E",
+authDomain: "swiftcheck-ed24e.firebaseapp.com",
+databaseURL: "https://swiftcheck-ed24e-default-rtdb.europe-west1.firebasedatabase.app",
+projectId: "swiftcheck-ed24e",
+storageBucket: "swiftcheck-ed24e.firebasestorage.app",
+messagingSenderId: "918610814261",
+appId: "1:918610814261:web:175b912556afc0d82e587c"
+};
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -203,13 +147,13 @@ const statusRef = db.ref('status');
 
 const statusEl = document.getElementById('status');
 const logEl = document.getElementById('log');
+const manualIn = document.getElementById('manual-id');
+const btnManual = document.getElementById('btn-manual');
 const btnNfc = document.getElementById('btn-nfc');
 const nfcLabel = document.getElementById('nfc-label');
 const btnQr = document.getElementById('btn-qr');
 const qrLabel = document.getElementById('qr-label');
 const qrReaderEl = document.getElementById('qr-reader');
-const onsiteEl = document.getElementById('onsite-count');
-const recentEl = document.getElementById('recent-list');
 const lookupEl = document.getElementById('worker-lookup');
 const lookupName = document.getElementById('lookup-name');
 const lookupRole = document.getElementById('lookup-role');
@@ -241,7 +185,6 @@ function escapeHtml(s) {
 return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Load workers into cache
 workersRef.on('value', snap => {
 workersCache = {};
 snap.forEach(child => {
@@ -250,7 +193,6 @@ workersCache[child.key] = child.val();
 log('Loaded ' + Object.keys(workersCache).length + ' workers');
 });
 
-// Live counter + recent list
 signinsRef.orderByChild('timestamp').on('value', snap => {
 const today = todayStart();
 const todays = [];
@@ -259,19 +201,14 @@ const v = child.val();
 if (v.timestamp && v.timestamp >= today) todays.push({ id: child.key, ...v });
 });
 
-// Count currently on site
-const onSiteNow = todays.filter(t => t.action === 'IN').length - todays.filter(t => t.action === 'OUT').length;
-onsiteEl.textContent = Math.max(0, onSiteNow);
-
-// Show last 5 (most recent first)
 const last5 = todays.slice(-5).reverse();
 if (last5.length === 0) {
-recentEl.innerHTML = '<div class="hint">No activity yet today.</div>';
+document.getElementById('recent-list').innerHTML = '<div class="hint">No activity yet today.</div>';
 } else {
-recentEl.innerHTML = last5.map(s => {
+document.getElementById('recent-list').innerHTML = last5.map(s => {
 const t = new Date(s.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 const actionClass = s.action === 'IN' ? 'in' : 'out';
-const actionText = s.action === 'IN' ? CONFIG.actionIn : CONFIG.actionOut;
+const actionText = s.action === 'IN' ? 'SIGNED IN' : 'SIGNED OUT';
 return `<div class="recent-item">
 <div class="info">
 <div class="name">${escapeHtml(s.workerName || 'Unknown')}</div>
@@ -285,48 +222,44 @@ return `<div class="recent-item">
 
 async function processScan(tagId, method) {
 if (!tagId || !tagId.trim()) {
-setStatus('❌ Empty tag — please try again', 'error');
+setStatus('❌ Empty ID — please try again', 'error');
 return;
 }
 tagId = tagId.trim();
 
-// Look up operative by NFC tag or QR code
-let operative = null;
+let worker = null;
 let workerId = null;
 
 for (const [id, data] of Object.entries(workersCache)) {
 if (data.nfcTag === tagId || data.qrCode === tagId || id === tagId) {
-operative = data;
+worker = data;
 workerId = id;
 break;
 }
 }
 
-if (!operative) {
-setStatus('❌ Unknown tag: ' + tagId, 'error');
-log('Tag not found in operative database: ' + tagId, 'err');
+if (!worker) {
+setStatus('❌ Unknown ID: ' + tagId, 'error');
+log('ID not found in database: ' + tagId, 'err');
 lookupEl.style.display = 'none';
 return;
 }
 
-// Show operative info
 lookupName.textContent = worker.name || workerId;
 lookupRole.textContent = worker.role || '';
 lookupEl.style.display = 'block';
 
-// Check current status
 const workerStatus = await statusRef.child(workerId).once('value');
 const currentStatus = workerStatus.val();
 const isOnSite = currentStatus && currentStatus.onSite;
 
 const action = isOnSite ? 'OUT' : 'IN';
-const actionText = action === 'IN' ? CONFIG.actionIn : CONFIG.actionOut;
+const actionText = action === 'IN' ? 'SIGNED IN' : 'SIGNED OUT';
 
-setStatus('⏳ Recording ' + actionText + '...', 'loading');
+setStatus(' Recording ' + actionText + '...', 'loading');
 log((worker.name || workerId) + ' → ' + actionText);
 
 try {
-// Record the sign-in/out
 const record = {
 workerId: workerId,
 workerName: worker.name || workerId,
@@ -338,7 +271,6 @@ date: new Date().toISOString().slice(0,10)
 };
 await signinsRef.push(record);
 
-// Update current status
 await statusRef.child(workerId).set({
 onSite: action === 'IN',
 lastAction: action,
@@ -351,13 +283,32 @@ if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
 setTimeout(() => {
 lookupEl.style.display = 'none';
-setStatus(CONFIG.statusReady, 'idle');
+setStatus('Ready — tap NFC card, scan QR code, or enter ID manually', 'idle');
 }, 3000);
 } catch (err) {
 setStatus('❌ Error: ' + err.message, 'error');
 log('Firebase error: ' + err.message, 'err');
 }
 }
+
+// Manual Entry
+btnManual.addEventListener('click', function() {
+const id = manualIn.value;
+if (!id) {
+setStatus('️ Please enter an ID first', 'error');
+manualIn.focus();
+return;
+}
+log('Manual submit: ' + id);
+processScan(id, 'Manual');
+manualIn.value = '';
+});
+
+manualIn.addEventListener('keypress', function(e) {
+if (e.key === 'Enter') {
+btnManual.click();
+}
+});
 
 // NFC
 function startNfc() {
@@ -399,13 +350,15 @@ setStatus('❌ NFC blocked: ' + err.message, 'error');
 });
 } catch (err) { log('NFC error: ' + err.message, 'err'); }
 }
+
 function stopNfc() {
 if (nfcReader) { try { nfcReader.abort(); } catch(e){} nfcReader = null; }
 nfcScanning = false;
 btnNfc.classList.remove('scanning');
 nfcLabel.textContent = 'START NFC SCAN';
-setStatus(CONFIG.statusReady, 'idle');
+setStatus('Ready — tap NFC card, scan QR code, or enter ID manually', 'idle');
 }
+
 btnNfc.addEventListener('click', () => nfcScanning ? stopNfc() : startNfc());
 
 // QR
@@ -422,26 +375,31 @@ processScan(decodedText, 'QR');
 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 stopQr();
 },
-() => {}
+(errorMessage) => {}
 ).then(() => {
 qrScanning = true;
 btnQr.classList.add('scanning');
 qrLabel.textContent = 'STOP CAMERA';
-setStatus('📷 Scanning QR — point at code', 'scanning');
+setStatus(' Scanning QR — point at code', 'scanning');
 }).catch(err => {
 log('Camera error: ' + err.message, 'err');
 setStatus('❌ Camera error: ' + err.message, 'error');
 qrReaderEl.style.display = 'none';
 });
 }
+
 function stopQr() {
-if (qrScanner && qrScanning) { qrScanner.stop().then(() => qrScanner.clear()).catch(()=>{}); }
-qrScanning = false; qrScanner = null;
+if (qrScanner && qrScanning) {
+qrScanner.stop().then(() => qrScanner.clear()).catch(()=>{});
+}
+qrScanning = false;
+qrScanner = null;
 btnQr.classList.remove('scanning');
 qrLabel.textContent = 'OPEN CAMERA';
 qrReaderEl.style.display = 'none';
-setStatus(CONFIG.statusReady, 'idle');
+setStatus('Ready — tap NFC card, scan QR code, or enter ID manually', 'idle');
 }
+
 btnQr.addEventListener('click', () => qrScanning ? stopQr() : startQr());
 
 log('SwiftCheck started');
