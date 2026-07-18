@@ -70,13 +70,31 @@ display:flex; justify-content:space-between; align-items:center; font-size:13px;
 <body>
 <div class="container">
 <header>
-<h1>⚡ SWIFTCHECK</h1>
-<p id="site-title">Site Terminal</p>
+<div style="display: flex; align-items: center; gap: 10px;">
+<!-- CSS Logo Icon -->
+<div style="display: flex; align-items: center; justify-content: center; width: 50px; height: 50px;">
+<div style="position: relative; width: 35px; height: 35px;">
+<!-- Grey curved shape -->
+<div style="position: absolute; width: 25px; height: 35px; border: 6px solid #8E8E8E; border-radius: 20px 20px 0 0; border-bottom: none; left: 0;"></div>
+<!-- Orange dot -->
+<div style="position: absolute; width: 10px; height: 10px; background: #F58C1F; border-radius: 50%; top: 8px; left: 18px;"></div>
+</div>
+</div>
+<!-- Company Name -->
+<div style="display: flex; flex-direction: column; line-height: 1.1;">
+<span style="font-size: 20px; font-weight: 800; color: #F58C1F; letter-spacing: 1px;">REGENCY</span>
+<span style="font-size: 16px; font-weight: 700; color: #8E8E8E; letter-spacing: 1px;">FACADES</span>
+</div>
+</div>
 </header>
 
-<div class="onsite-banner">
-<div class="count" id="onsite-count">—</div>
-<div class="label" id="onsite-label">Workers on site today</div>
+<div class="card">
+<h2>Manual ID Entry</h2>
+<p class="hint">Type your NFC tag ID or worker ID manually.</p>
+<input type="text" id="manual-id" placeholder="Enter ID here..." autocomplete="off">
+<button type="button" class="btn-primary" id="btn-manual" style="margin-top: 10px;">
+SUBMIT SIGN-IN
+</button>
 </div>
 
 <div id="status" class="status-idle" id="status-text">Ready — tap NFC card or scan QR code</div>
@@ -118,12 +136,33 @@ display:flex; justify-content:space-between; align-items:center; font-size:13px;
 </div>
 
 <script>
+  // Manual entry button functionality
+const btnManual = document.getElementById('btn-manual');
+const manualIdInput = document.getElementById('manual-id');
+
+if (btnManual && manualIdInput) {
+btnManual.addEventListener('click', function() {
+const id = manualIdInput.value.trim();
+if (!id) {
+setStatus('⚠️ Please enter an ID first', 'error');
+return;
+}
+processScan(id, 'Manual');
+manualIdInput.value = '';
+});
+
+// Allow pressing Enter key
+manualIdInput.addEventListener('keypress', function(e) {
+if (e.key === 'Enter') {
+btnManual.click();
+}
+});
+}
 /* ============================================================
 🔧 CONFIGURATION — CUSTOMIZE WORDING HERE
 ============================================================ */
 const CONFIG = {
 siteTitle: "Site Terminal", // Header subtitle
-onsiteLabel: "Workers on site today", // Big green banner text
 nfcTitle: "NFC Card Scan", // NFC section title
 nfcHint: "Hold your card against the back of the phone to sign in or out.",
 qrTitle: "QR Code Scan", // QR section title
